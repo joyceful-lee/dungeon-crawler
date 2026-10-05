@@ -885,6 +885,7 @@
       maxMp: stats.maxMp,
       spell: carry ? carry.spell : Object.keys(meta.unlockedSpells).find((id) => meta.unlockedSpells[id]),
       facing: { x: 0, y: 1 },
+      attackT: 0,
     };
   }
 
@@ -937,7 +938,6 @@
 
     document.querySelectorAll(".spell-btn").forEach((btn) => {
       const unlocked = !!meta.unlockedSpells[btn.dataset.spell];
-      const hotkey = meta.spellOrder.indexOf(btn.dataset.spell) + 1;
       const on = btn.dataset.spell === p.spell;
       btn.disabled = !unlocked;
       btn.classList.toggle("locked", !unlocked);
@@ -947,7 +947,7 @@
       const cost = Math.max(1, SPELLS[btn.dataset.spell].cost - meta.manaDiscount);
       const costEl = btn.querySelector(".spell-cost");
       const nameEl = btn.querySelector(".spell-name");
-      if (nameEl) nameEl.textContent = unlocked ? `${hotkey}. ${SPELLS[btn.dataset.spell].name}` : SPELLS[btn.dataset.spell].name;
+      if (nameEl) nameEl.textContent = SPELLS[btn.dataset.spell].name;
       if (costEl) costEl.textContent = unlocked ? `${cost} MP` : "Locked";
     });
     if (els.spellKeyList) {
@@ -1233,6 +1233,7 @@
     }
 
     sfx.swing();
+    p.attackT = 0.26;
     addFx(
       "slash",
       p.x + p.facing.x * 0.4,
@@ -1984,9 +1985,22 @@
     // This makes the next attack direction readable before the player commits.
     const facing = game.player.facing;
     const weaponAngle = Math.atan2(facing.y, facing.x);
+    let swordSwing = 0;
+    if (meta.weapon === "sword" && game.player.attackT > 0) {
+      const progress = Math.max(0, Math.min(1, 1 - game.player.attackT / 0.26));
+      if (progress < 0.72) {
+        const forward = progress / 0.72;
+        const eased = 0.5 - Math.cos(forward * Math.PI) / 2;
+        swordSwing = -1.02 + eased * 2.08;
+      } else {
+        const recovery = (progress - 0.72) / 0.28;
+        const eased = 0.5 - Math.cos(recovery * Math.PI) / 2;
+        swordSwing = 1.06 * (1 - eased);
+      }
+    }
     ctx.save();
     ctx.translate(px + 16, py + 16);
-    ctx.rotate(weaponAngle);
+    ctx.rotate(weaponAngle + swordSwing);
     if (meta.weapon === "bow") {
       ctx.strokeStyle = "#d4a84b";
       ctx.lineWidth = 2;
@@ -2265,7 +2279,8 @@
         ctx.strokeStyle = f.color;
         ctx.lineCap = "round";
         const slashSegments = 8;
-        for (let i = 0; i < slashSegments; i++) {
+        const visibleSegments = Math.max(1, Math.ceil((1 - a) * slashSegments));
+        for (let i = 0; i < visibleSegments; i++) {
           const start = -0.92 + (i / slashSegments) * 1.84;
           const end = -0.92 + ((i + 1) / slashSegments) * 1.84 + 0.035;
           ctx.globalAlpha = Math.max(0, a) * (0.6 + i / (slashSegments * 2.2));
@@ -2517,6 +2532,7 @@
       if (spawnGuard > 0) spawnGuard -= dt;
       if (moveCooldown > 0) moveCooldown -= dt;
       if (attackCooldown > 0) attackCooldown -= dt;
+      if (game.player.attackT > 0) game.player.attackT = Math.max(0, game.player.attackT - dt);
       if (castCooldown > 0) castCooldown -= dt;
       if (blockTimer > 0) {
         blockTimer -= dt;
