@@ -146,12 +146,16 @@ body.mode-touch {
     calc(8px + var(--safe-left));
 }
 
+body.mode-touch .desktop-only {
+  display: none !important;
+}
+
 body.mode-touch #app {
   height: 100%;
   max-width: 520px;
   margin: 0 auto;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 6px;
 }
 
@@ -196,12 +200,8 @@ body.mode-touch .hud-top {
   min-height: 44px;
 }
 
-body.mode-touch .hint {
-  order: 3;
-}
-
 body.mode-touch .hud-status {
-  order: 4;
+  order: 3;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -213,7 +213,7 @@ body.mode-touch .hud-status {
 }
 
 body.mode-touch .controls {
-  order: 5;
+  order: 4;
 }
 
 body.mode-touch .hud-left {
@@ -627,6 +627,10 @@ body.mode-touch .banner {
   color: var(--mp-glow);
 }
 
+.spell-btn[data-spell="fire"] .spell-glyph {
+  color: var(--gold);
+}
+
 .spell-btn.active {
   border-color: var(--gold);
   color: var(--cream);
@@ -670,6 +674,88 @@ body.mode-touch .banner {
 .dpad .dir[data-dir="left"] { grid-column: 1; grid-row: 2; }
 .dpad .dir[data-dir="down"] { grid-column: 2; grid-row: 3; }
 .dpad .dir[data-dir="right"] { grid-column: 3; grid-row: 2; }
+
+.joystick-wrap {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.joystick-wrap small {
+  color: var(--cream-dim);
+  font-family: var(--font-display);
+  font-size: .66rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.joystick {
+  position: relative;
+  width: min(42vw, 158px);
+  aspect-ratio: 1;
+  flex: none;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(224,184,90,.15) 0 19%, transparent 20%),
+    radial-gradient(circle, #332318 0 34%, #1c130d 35% 62%, #0b0806 63% 100%);
+  box-shadow:
+    inset 0 0 0 3px #120c08,
+    inset 0 0 0 5px var(--gold-dim),
+    inset 0 0 28px #000,
+    0 6px 0 #080503,
+    0 10px 18px rgba(0,0,0,.35);
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.joystick.active {
+  cursor: grabbing;
+  border-color: #ffe291;
+  box-shadow:
+    inset 0 0 0 3px #120c08,
+    inset 0 0 0 5px var(--gold),
+    inset 0 0 30px #000,
+    0 3px 0 #080503,
+    0 0 18px rgba(224,184,90,.32);
+}
+
+.joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  border-radius: 50%;
+  border: 3px solid #f1cb6d;
+  background:
+    radial-gradient(circle at 36% 30%, #8a6730 0 10%, #4b351e 34%, #21160e 72%, #100a06 100%);
+  box-shadow:
+    inset 0 0 0 2px #17100a,
+    0 5px 9px rgba(0,0,0,.62),
+    0 0 12px rgba(224,184,90,.2);
+  transform: translate(0, 0);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.joystick-mark {
+  position: absolute;
+  color: var(--gold-dim);
+  font-size: .45rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.joystick-mark--up { left: 50%; top: 9px; transform: translateX(-50%); }
+.joystick-mark--right { right: 9px; top: 50%; transform: translateY(-50%); }
+.joystick-mark--down { left: 50%; bottom: 9px; transform: translateX(-50%); }
+.joystick-mark--left { left: 9px; top: 50%; transform: translateY(-50%); }
 
 .pad-btn.dir {
   min-height: var(--tap-min);
@@ -1212,6 +1298,43 @@ body.mode-touch .banner {
 .welcome-controls small { color: var(--cream-dim); font-size: .7rem; text-transform: uppercase; }
 .enter-btn { min-width: 190px; }
 
+.welcome-mobile-intro {
+  max-width: 390px;
+  margin: 0 auto 22px;
+  padding: 16px;
+  border: 1px solid rgba(224,184,90,.32);
+  background: rgba(4,3,2,.72);
+}
+
+.welcome-mobile-intro strong {
+  display: block;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: .88rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.welcome-mobile-intro p {
+  margin: 8px 0 12px;
+  color: var(--cream-dim);
+  line-height: 1.35;
+}
+
+.welcome-touch-icons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.welcome-touch-icons span {
+  padding: 5px 8px;
+  border: 1px solid rgba(224,184,90,.22);
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: .68rem;
+}
+
 .overlay-card {
   position: relative;
   width: min(100%, 420px);
@@ -1455,6 +1578,8 @@ body.mode-touch .banner {
 
 .spellbook-entry {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 14px;
   padding: 12px 14px;
@@ -1465,6 +1590,24 @@ body.mode-touch .banner {
 
 .spellbook-entry strong { color: var(--gold); font-family: var(--font-display); }
 .spellbook-entry.rune { border-left-color: #b084f5; }
+
+.spellbook-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+}
+
+.spellbook-cost {
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, var(--mp-glow) 70%, var(--stone));
+  color: var(--mp-glow);
+  background: rgba(30, 48, 92, .48);
+  font-family: var(--font-display);
+  font-size: .68rem;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
 
 .theme-preview {
   display: grid;

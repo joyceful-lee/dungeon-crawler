@@ -126,6 +126,8 @@
     btnAttack: document.getElementById("btnAttack"),
     btnBlock: document.getElementById("btnBlock"),
     btnCast: document.getElementById("btnCast"),
+    moveJoystick: document.getElementById("moveJoystick"),
+    joystickKnob: document.getElementById("joystickKnob"),
     btnPause: document.getElementById("btnPause"),
     btnMusic: document.getElementById("btnMusic"),
     btnShop: document.getElementById("btnShop"),
@@ -344,6 +346,8 @@
   }
 
   function isTouchMode() {
+    // The query override keeps the touch layout directly testable on desktop browsers.
+    if (new URLSearchParams(window.location.search).get("touch") === "1") return true;
     const coarse = window.matchMedia("(pointer: coarse)").matches;
     const fine = window.matchMedia("(pointer: fine)").matches;
     const noHover = window.matchMedia("(hover: none)").matches;
@@ -1628,9 +1632,11 @@
       bolt: "Forked Rune — bolt arcs to a second foe",
       phase: "Phase Rune — spells can cross walls",
     };
-    const spellRows = meta.spellOrder.map((id, index) =>
-      `<div class="spellbook-entry"><strong>${index + 1}. ${SPELLS[id].name}</strong><span>${meta.spellEffects[id] ? runeNames[id] : "No spell rune yet"}</span></div>`
-    );
+    const spellRows = meta.spellOrder.map((id, index) => {
+      const spell = SPELLS[id];
+      const cost = Math.max(1, spell.cost - meta.manaDiscount);
+      return `<div class="spellbook-entry"><div class="spellbook-title"><strong>${index + 1}. ${spell.name}</strong><span class="spellbook-cost">${cost} MP</span></div><span>${meta.spellEffects[id] ? runeNames[id] : "No spell rune yet"}</span></div>`;
+    });
     const extraRunes = meta.spellEffects.phase
       ? [`<div class="spellbook-entry rune"><strong>Universal Rune</strong><span>${runeNames.phase}</span></div>`]
       : [];
@@ -2556,6 +2562,73 @@
       btn.addEventListener("pointercancel", release);
     });
 
+    if (els.moveJoystick && els.joystickKnob) {
+      let joystickPointer = null;
+      let joystickDir = null;
+
+      const setJoystickDirection = (nextDir) => {
+        if (joystickDir === nextDir) return;
+        if (joystickDir) heldDirs.delete(joystickDir);
+        joystickDir = nextDir;
+        if (!nextDir) {
+          els.moveJoystick.setAttribute("aria-valuetext", "Centered");
+          return;
+        }
+        heldDirs.add(nextDir);
+        els.moveJoystick.setAttribute("aria-valuetext", `Moving ${nextDir}`);
+        const [dx, dy] = dirMap[nextDir];
+        tryMove(dx, dy);
+      };
+
+      const updateJoystick = (ev) => {
+        const rect = els.moveJoystick.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const rawX = ev.clientX - cx;
+        const rawY = ev.clientY - cy;
+        const distance = Math.hypot(rawX, rawY);
+        const limit = Math.max(24, rect.width * 0.3);
+        const scale = distance > limit ? limit / distance : 1;
+        const x = rawX * scale;
+        const y = rawY * scale;
+        els.joystickKnob.style.transform = `translate(${x}px, ${y}px)`;
+
+        if (distance < rect.width * 0.13) {
+          setJoystickDirection(null);
+        } else if (Math.abs(rawX) > Math.abs(rawY)) {
+          setJoystickDirection(rawX > 0 ? "right" : "left");
+        } else {
+          setJoystickDirection(rawY > 0 ? "down" : "up");
+        }
+      };
+
+      const releaseJoystick = (ev) => {
+        if (joystickPointer !== ev.pointerId) return;
+        joystickPointer = null;
+        setJoystickDirection(null);
+        els.joystickKnob.style.transform = "translate(0, 0)";
+        els.moveJoystick.classList.remove("active");
+      };
+
+      els.moveJoystick.addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        joystickPointer = ev.pointerId;
+        els.moveJoystick.setPointerCapture(ev.pointerId);
+        els.moveJoystick.classList.add("active");
+        updateJoystick(ev);
+      });
+      els.moveJoystick.addEventListener("pointermove", (ev) => {
+        if (joystickPointer !== ev.pointerId) return;
+        ev.preventDefault();
+        updateJoystick(ev);
+      });
+      els.moveJoystick.addEventListener("pointerup", releaseJoystick);
+      els.moveJoystick.addEventListener("pointercancel", releaseJoystick);
+      els.moveJoystick.addEventListener("lostpointercapture", (ev) => {
+        if (joystickPointer === ev.pointerId) releaseJoystick(ev);
+      });
+    }
+
     const bindAction = (el, fn) => {
       if (!el) return;
       el.addEventListener("pointerdown", (ev) => {
@@ -2698,8 +2771,8 @@
     let nextW;
     let nextH;
     if (touch) {
-      nextW = 15;
-      nextH = 15;
+      nextW = 10;
+      nextH = 10;
     } else {
       // Keep ~15 tiles visible vertically; widen horizontally to match aspect
       nextH = 15;

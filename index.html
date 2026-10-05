@@ -65,13 +65,11 @@
       <div id="banner" class="banner hidden" role="status"></div>
     </div>
 
-    <p class="hint touch-only" id="hint">Move · Smash crates · Beat the boss · Descend</p>
-
     <section class="controls touch-only" aria-label="Touch controls">
       <div class="spell-row" role="group" aria-label="Magic spells">
         <button type="button" class="spell-btn active" data-spell="fire" aria-pressed="true">
           <span class="spell-glyph" aria-hidden="true">
-            <svg viewBox="0 0 24 24" class="ui-icon"><path fill="currentColor" d="M12 2c1.2 4.2-.4 6.4-2.2 8.2C7.8 12.2 7 14 7 16a5 5 0 0 0 10 0c0-2.4-1.1-4.2-2.4-5.8C16 8 16.8 5.8 12 2zm0 16a2.5 2.5 0 0 1-2.5-2.5c0-1 .4-1.7 1.2-2.7.3 1.2 1.1 1.9 2.3 1.9.7 0 1.3-.3 1.7-.8.2.6.3 1.2.3 1.6A2.5 2.5 0 0 1 12 18z"/></svg>
+            <svg viewBox="0 0 24 24" class="ui-icon"><path fill="currentColor" fill-rule="evenodd" d="M13.7 1.1c-.7 3.8.1 5.8 2.2 7.7 2 1.8 3.6 4 3.6 7.1a7.5 7.5 0 0 1-15 0c0-2.7 1.1-5 3.4-7.2.1 2 .7 3.2 1.8 4.1.8-2.2.2-4.4 4-11.7ZM12 20.2a3.6 3.6 0 0 0 3.6-3.6c0-1.2-.5-2.2-1.5-3.4-.1 1.6-.7 2.5-1.8 3.2-.2-1.3-.8-2.2-1.8-3.2-1.3 1.5-2.1 2.5-2.1 3.8a3.6 3.6 0 0 0 3.6 3.2Z"/></svg>
           </span>
           <span class="spell-name">Fire</span>
           <span class="spell-cost">4 MP</span>
@@ -93,19 +91,15 @@
       </div>
 
       <div class="action-pad">
-        <div class="dpad" role="group" aria-label="Movement">
-          <button type="button" class="pad-btn dir" data-dir="up" aria-label="Move up">
-            <svg viewBox="0 0 24 24" class="ui-icon" aria-hidden="true"><path fill="currentColor" d="M12 5 4 15h16L12 5z"/></svg>
-          </button>
-          <button type="button" class="pad-btn dir" data-dir="left" aria-label="Move left">
-            <svg viewBox="0 0 24 24" class="ui-icon" aria-hidden="true"><path fill="currentColor" d="M5 12 15 4v16L5 12z"/></svg>
-          </button>
-          <button type="button" class="pad-btn dir" data-dir="down" aria-label="Move down">
-            <svg viewBox="0 0 24 24" class="ui-icon" aria-hidden="true"><path fill="currentColor" d="M12 19 20 9H4l8 10z"/></svg>
-          </button>
-          <button type="button" class="pad-btn dir" data-dir="right" aria-label="Move right">
-            <svg viewBox="0 0 24 24" class="ui-icon" aria-hidden="true"><path fill="currentColor" d="M19 12 9 20V4l10 8z"/></svg>
-          </button>
+        <div class="joystick-wrap" role="group" aria-label="Movement">
+          <div class="joystick" id="moveJoystick" role="slider" aria-label="Drag to move" aria-valuetext="Centered" aria-valuemin="0" aria-valuemax="100" tabindex="0">
+            <span class="joystick-mark joystick-mark--up" aria-hidden="true">◆</span>
+            <span class="joystick-mark joystick-mark--right" aria-hidden="true">◆</span>
+            <span class="joystick-mark joystick-mark--down" aria-hidden="true">◆</span>
+            <span class="joystick-mark joystick-mark--left" aria-hidden="true">◆</span>
+            <span class="joystick-knob" id="joystickKnob" aria-hidden="true"></span>
+          </div>
+          <small>Drag to move</small>
         </div>
 
         <div class="combat-pad" role="group" aria-label="Combat">
@@ -166,7 +160,7 @@
       <div class="welcome-panel-face">
         <p class="welcome-kicker">Beyond the sealed gate</p>
         <h2>Crypt Depths</h2>
-        <div class="welcome-controls">
+        <div class="welcome-controls desktop-only">
           <section class="welcome-control-group">
             <strong>Explore</strong>
             <span><kbd>WASD</kbd><small>Move</small></span>
@@ -188,7 +182,11 @@
             <span><kbd>Esc</kbd><small>Pause</small></span>
           </section>
         </div>
-        <p class="touch-only welcome-touch">Use the movement pad, Attack, Block, and Cast controls below the map.</p>
+        <div class="touch-only welcome-mobile-intro">
+          <strong>Made for touch</strong>
+          <p>Drag the movement sigil to explore, tap the combat buttons to fight, and choose spells from the rune bar.</p>
+          <div class="welcome-touch-icons" aria-hidden="true"><span>◉ Move</span><span>⚔ Fight</span><span>✦ Cast</span></div>
+        </div>
         <button type="button" class="menu-btn primary enter-btn" id="btnEnterCrypt">Enter the Crypt</button>
       </div>
     </div>
@@ -264,7 +262,7 @@
       <div class="howto touch-only" id="howtoTouch">
         <h3>Controls</h3>
         <ul>
-          <li>Use the pad to move, or swipe the map</li>
+          <li>Drag the movement stick, or swipe the map</li>
           <li>Attack swings your weapon · Block reduces damage</li>
           <li>Pick a spell, then Cast (uses MP)</li>
           <li>Step onto dropped health or mana potions to collect them</li>
