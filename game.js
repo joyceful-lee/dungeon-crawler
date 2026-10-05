@@ -552,23 +552,23 @@
           g.fillRect(x + 4, y + 4, 3, 2);
         });
       } else if (theme.id === "ember") {
-        // Cooled lava blocks with glowing cracks between them.
-        g.fillStyle = "#120807";
+        // Near-black cooled walls stay distinct from the orange coal floor.
+        g.fillStyle = "#070504";
         g.fillRect(0, 0, TILE, TILE);
         const lavaBlocks = [[1,1,14,9],[17,1,14,9],[1,12,9,9],[12,12,19,9],[1,23,16,8],[19,23,12,8]];
         lavaBlocks.forEach(([x,y,w,h], i) => {
-          g.fillStyle = i % 2 ? "#3a1712" : "#29110e";
+          g.fillStyle = i % 2 ? "#1c0d0a" : "#110908";
           g.fillRect(x,y,w,h);
-          g.fillStyle = "#5d2417";
+          g.fillStyle = i % 2 ? "#702119" : "#511812";
           g.fillRect(x + 2, y + 2, Math.max(2,w - 4), 2);
-          g.fillStyle = "rgba(0,0,0,.4)";
+          g.fillStyle = "rgba(0,0,0,.72)";
           g.fillRect(x + 2, y + h - 2, Math.max(2,w - 3), 1);
         });
-        g.fillStyle = "#e3481d";
+        g.fillStyle = "#a82419";
         g.fillRect(15, 0, 2, 12);
         g.fillRect(10, 10, 2, 13);
         g.fillRect(17, 21, 2, 11);
-        g.fillStyle = "#ff9a32";
+        g.fillStyle = "#ef4b2b";
         g.fillRect(15, 4, 1, 5);
       } else if (theme.id === "verdant") {
         drawBrickWall(g, true);
@@ -1192,7 +1192,14 @@
         dmg: stats.dmg,
         color: "#e8d5a3",
       });
-      addFx("spark", p.x + p.facing.x, p.y + p.facing.y, "#e8d5a3", 0.15);
+      addFx(
+        "arrow",
+        p.x + p.facing.x,
+        p.y + p.facing.y,
+        "#e8d5a3",
+        0.18,
+        Math.atan2(p.facing.y, p.facing.x)
+      );
       return;
     }
 
@@ -1766,7 +1773,7 @@
       bolt.x += bolt.dx;
       bolt.y += bolt.dy;
       bolt.left -= 1;
-      addFx("spark", bolt.x, bolt.y, bolt.color, 0.12);
+      addFx("arrow", bolt.x, bolt.y, bolt.color, 0.16, Math.atan2(bolt.dy, bolt.dx));
 
       if (
         bolt.x < 0 || bolt.y < 0 ||
@@ -2225,9 +2232,41 @@
         ctx.translate(px, py);
         ctx.rotate(f.angle);
         ctx.strokeStyle = f.color;
-        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        const slashSegments = 8;
+        for (let i = 0; i < slashSegments; i++) {
+          const start = -0.92 + (i / slashSegments) * 1.84;
+          const end = -0.92 + ((i + 1) / slashSegments) * 1.84 + 0.035;
+          ctx.globalAlpha = Math.max(0, a) * (0.6 + i / (slashSegments * 2.2));
+          ctx.lineWidth = 0.65 + i * 0.58;
+          ctx.beginPath();
+          ctx.arc(0, 0, 9.5 + i * 0.13, start, end);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (f.type === "arrow") {
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(f.angle);
+        ctx.strokeStyle = f.color;
+        ctx.fillStyle = f.color;
+        ctx.lineWidth = 1.15;
+        ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.arc(0, 0, 10, -0.8, 0.8);
+        ctx.moveTo(-10, 0);
+        ctx.lineTo(7, 0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(10, 0);
+        ctx.lineTo(5, -2.2);
+        ctx.lineTo(5, 2.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(-11, -2.5);
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(-11, 2.5);
         ctx.stroke();
         ctx.restore();
       } else if (f.type === "cast") {

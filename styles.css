@@ -419,11 +419,11 @@ body.mode-touch #howtoDesktop {
 }
 
 .stat-block:first-child .stat-label {
-  color: #fff;
+  color: var(--cream-dim);
 }
 
 .stat-block:first-child .stat-value {
-  color: #fff;
+  color: var(--cream);
 }
 
 .bar-fill.mp {
@@ -800,15 +800,16 @@ body.mode-touch .banner {
   z-index: 45;
   padding: 0;
   overflow: hidden;
-  background: #050302;
+  background: transparent;
   min-height: 100vh;
   min-height: 100dvh;
-  transition: background-color .35s ease .2s;
+  transition: none;
 }
 
-.crypt-gate.opening { background-color: rgba(5, 3, 2, 0.15); }
+.crypt-gate.opening { background: transparent; }
 
 .crypt-stone-wall {
+  display: none;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -848,12 +849,13 @@ body.mode-touch .banner {
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  background: #2a1c12;
+  background: transparent;
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7);
-  clip-path: inset(0 round 360px 360px 12px 12px);
+  clip-path: none;
 }
 
 .crypt-arch {
+  display: none;
   z-index: 2;
   background: transparent;
   box-shadow:
@@ -980,16 +982,17 @@ body.mode-touch .banner {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 12% 14%, #c9a227 0 2px, #5a4010 3px, transparent 4px),
-    radial-gradient(circle at 88% 14%, #c9a227 0 2px, #5a4010 3px, transparent 4px),
-    radial-gradient(circle at 12% 50%, #c9a227 0 2px, #5a4010 3px, transparent 4px),
-    radial-gradient(circle at 88% 50%, #c9a227 0 2px, #5a4010 3px, transparent 4px),
-    radial-gradient(circle at 12% 85%, #c9a227 0 2px, #5a4010 3px, transparent 4px),
-    radial-gradient(circle at 88% 85%, #c9a227 0 2px, #5a4010 3px, transparent 4px);
+    radial-gradient(circle at 12% calc(12% + 9px), #e4bc3f 0 2px, #5a4010 3px, transparent 4px),
+    radial-gradient(circle at 88% calc(12% + 9px), #e4bc3f 0 2px, #5a4010 3px, transparent 4px),
+    radial-gradient(circle at 12% calc(48% + 9px), #e4bc3f 0 2px, #5a4010 3px, transparent 4px),
+    radial-gradient(circle at 88% calc(48% + 9px), #e4bc3f 0 2px, #5a4010 3px, transparent 4px),
+    radial-gradient(circle at 12% calc(82% + 9px), #e4bc3f 0 2px, #5a4010 3px, transparent 4px),
+    radial-gradient(circle at 88% calc(82% + 9px), #e4bc3f 0 2px, #5a4010 3px, transparent 4px);
   pointer-events: none;
 }
 
 .door-hinge {
+  display: none;
   position: absolute;
   left: 0;
   width: 22px;
@@ -1061,6 +1064,8 @@ body.mode-touch .banner {
 
 .crypt-gate.opening .crypt-portal {
   overflow: visible;
+  opacity: 1;
+  transition: none;
 }
 
 .crypt-gate.opening .crypt-door--left {
@@ -1072,7 +1077,6 @@ body.mode-touch .banner {
 }
 
 .crypt-gate.opening .crypt-arch,
-.crypt-gate.opening .crypt-portal,
 .crypt-gate.opening .crypt-stone-wall {
   opacity: 0;
   transition: opacity 0.45s ease 0.55s;
@@ -1098,18 +1102,47 @@ body.mode-touch .banner {
 .welcome-content {
   position: relative;
   z-index: 20;
-  width: min(86%, 520px);
-  padding: 34px 28px;
+  width: min(90%, 590px);
+  padding: 3px;
   text-align: center;
   color: var(--cream);
-  background:
-    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--gold) 20%, transparent), transparent 46%),
-    repeating-linear-gradient(0deg, color-mix(in srgb, var(--theme-btn) 78%, #080503) 0 24px, color-mix(in srgb, var(--theme-btn-deep) 88%, #050302) 24px 27px);
-  border: 5px double var(--gold);
+  background: linear-gradient(135deg, #fff1a0, var(--gold) 45%, var(--gold-dim));
+  border: 0;
   clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
-  box-shadow: 0 0 0 5px rgba(20,13,8,.9), inset 0 0 38px #000, 0 18px 60px #000;
+  box-shadow: 0 18px 60px #000;
   pointer-events: auto;
   transition: opacity .35s ease, transform .35s ease;
+}
+
+.welcome-panel-face {
+  position: relative;
+  isolation: isolate;
+  padding: 32px 28px 28px;
+  background: #080503;
+  clip-path: polygon(15px 0, calc(100% - 15px) 0, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px), 0 15px);
+}
+
+.welcome-panel-face::before,
+.welcome-panel-face::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+}
+
+.welcome-panel-face::before {
+  inset: 4px;
+  z-index: -2;
+  background: linear-gradient(135deg, #fff1a0, var(--gold) 45%, var(--gold-dim));
+}
+
+.welcome-panel-face::after {
+  inset: 7px;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 50% 0, rgba(224, 184, 90, .08), transparent 40%),
+    repeating-linear-gradient(0deg, #160e09 0 24px, #0a0604 24px 27px);
+  box-shadow: inset 0 0 52px #000;
 }
 
 .crypt-gate.opening .welcome-content {
@@ -1137,20 +1170,40 @@ body.mode-touch .banner {
 
 .welcome-controls {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 22px;
 }
 
-.welcome-controls span {
+.welcome-control-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 6px;
+  padding: 9px;
+  border: 1px solid rgba(224,184,90,.28);
+  background: rgba(5,3,2,.72);
+}
+
+.welcome-control-group strong {
+  grid-column: 1 / -1;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(224,184,90,.22);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.welcome-control-group span {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 8px;
-  border: 1px solid rgba(224,184,90,.32);
-  background: rgba(35,24,15,.7);
+  gap: 6px;
+  min-height: 34px;
+  padding: 5px;
+  background: rgba(34,22,13,.55);
 }
 
 .welcome-controls kbd,
@@ -1601,9 +1654,11 @@ body.mode-touch .banner {
     font-size: 0.55rem;
   }
 
-  .welcome-content { padding: 24px 16px; }
+  .welcome-content { padding: 3px; }
+  .welcome-panel-face { padding: 24px 14px 20px; }
   .welcome-controls { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .welcome-controls span { min-height: 40px; }
+  .welcome-control-group { grid-template-columns: 1fr; padding: 6px; }
+  .welcome-control-group span { min-height: 30px; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
@@ -1829,4 +1884,48 @@ body.theme-void .menu-btn.primary {
   background:
     linear-gradient(180deg, var(--theme-btn), var(--theme-btn-deep)) padding-box,
     linear-gradient(135deg, #fff6bd, var(--gold) 45%, var(--gold-dim)) border-box;
+}
+
+/* A clipped border cannot paint across its cut corners. These buttons use a
+   gold outer polygon with a smaller face so every bevel stays outlined. */
+:where(.icon-btn, .menu-btn, .shop-buy, .choice-card, .spell-btn, .pad-btn) {
+  --button-face: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-btn) 84%, #5a4028),
+    var(--theme-btn-deep)
+  );
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  background: linear-gradient(135deg, #fff3a8, var(--gold) 44%, var(--gold-dim)) !important;
+}
+
+:where(.icon-btn, .menu-btn, .shop-buy, .choice-card, .spell-btn, .pad-btn)::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--button-face);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+}
+
+.menu-btn.primary {
+  --button-face: linear-gradient(180deg, color-mix(in srgb, var(--gold-dim) 38%, var(--theme-btn)), var(--theme-btn-deep));
+}
+
+.menu-btn.danger {
+  --button-face: linear-gradient(180deg, #5a2a20, #2a120e);
+}
+
+.pad-btn.attack {
+  --button-face: linear-gradient(180deg, color-mix(in srgb, var(--attack) 80%, #fff 20%), var(--attack));
+}
+
+.pad-btn.block {
+  --button-face: linear-gradient(180deg, color-mix(in srgb, var(--block) 75%, #fff 25%), var(--block));
+}
+
+.pad-btn.cast {
+  --button-face: linear-gradient(180deg, color-mix(in srgb, var(--cast) 75%, #fff 25%), var(--cast));
 }

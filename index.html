@@ -163,19 +163,34 @@
     </div>
     <div class="crypt-arch" aria-hidden="true"></div>
     <div class="welcome-content">
-      <p class="welcome-kicker">Beyond the sealed gate</p>
-      <h2>Crypt Depths</h2>
-      <div class="welcome-controls">
-        <span><kbd>WASD</kbd><small>Move</small></span>
-        <span><kbd>Space</kbd><small>Attack</small></span>
-        <span><kbd>Shift</kbd><small>Block</small></span>
-        <span><kbd>V</kbd><small>Cast</small></span>
-        <span><kbd>E</kbd><small>Shop</small></span>
-        <span><kbd>Esc</kbd><small>Pause</small></span>
-        <span><kbd>R</kbd><small>Runes</small></span>
+      <div class="welcome-panel-face">
+        <p class="welcome-kicker">Beyond the sealed gate</p>
+        <h2>Crypt Depths</h2>
+        <div class="welcome-controls">
+          <section class="welcome-control-group">
+            <strong>Explore</strong>
+            <span><kbd>WASD</kbd><small>Move</small></span>
+          </section>
+          <section class="welcome-control-group">
+            <strong>Combat</strong>
+            <span><kbd>Space</kbd><small>Attack</small></span>
+            <span><kbd>Shift</kbd><small>Block</small></span>
+          </section>
+          <section class="welcome-control-group">
+            <strong>Spellcraft</strong>
+            <span><kbd>V</kbd><small>Cast</small></span>
+            <span><kbd>1–3</kbd><small>Select Spell</small></span>
+            <span><kbd>R</kbd><small>Spellbook</small></span>
+          </section>
+          <section class="welcome-control-group">
+            <strong>Menus</strong>
+            <span><kbd>E</kbd><small>Shop</small></span>
+            <span><kbd>Esc</kbd><small>Pause</small></span>
+          </section>
+        </div>
+        <p class="touch-only welcome-touch">Use the movement pad, Attack, Block, and Cast controls below the map.</p>
+        <button type="button" class="menu-btn primary enter-btn" id="btnEnterCrypt">Enter the Crypt</button>
       </div>
-      <p class="touch-only welcome-touch">Use the movement pad, Attack, Block, and Cast controls below the map.</p>
-      <button type="button" class="menu-btn primary enter-btn" id="btnEnterCrypt">Enter the Crypt</button>
     </div>
   </div>
 
