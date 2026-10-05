@@ -1092,8 +1092,31 @@
         unlockSpell(learned);
         bits.push(`${SPELLS[learned].name} unlocked`);
       } else {
-        meta.bonusSpellDmg += 2;
-        bits.push("Tome: +2 spell damage");
+        const missingRunes = ["fire", "frost", "bolt"].filter((id) =>
+          meta.unlockedSpells[id] && !meta.spellEffects[id]
+        );
+        const reward = rand(1, 4);
+        if (reward === 1) {
+          const amount = rand(1, 3);
+          meta.bonusSpellDmg += amount;
+          bits.push(`Tome: +${amount} spell damage`);
+        } else if (reward === 2) {
+          meta.bonusSpellRange += 1;
+          bits.push("Tome: +1 spell range");
+        } else if (reward === 3) {
+          meta.bonusMp += 3;
+          game.player.maxMp += 3;
+          game.player.mp = Math.min(game.player.maxMp, game.player.mp + 3);
+          bits.push("Tome: +3 maximum MP");
+        } else if (missingRunes.length) {
+          const rune = pick(missingRunes);
+          meta.spellEffects[rune] = true;
+          bits.push(`${SPELLS[rune].name} rune awakened`);
+        } else {
+          const amount = rand(1, 3);
+          meta.bonusSpellDmg += amount;
+          bits.push(`Tome: +${amount} spell damage`);
+        }
       }
       sfx.tome();
     }
@@ -1101,13 +1124,13 @@
     updateHud();
   }
 
-  function beginSlide(ent, nx, ny) {
+  function beginSlide(ent, nx, ny, duration = MOVE_SLIDE) {
     ent.fromX = visualPos(ent).x;
     ent.fromY = visualPos(ent).y;
     ent.x = nx;
     ent.y = ny;
-    ent.moveT = MOVE_SLIDE;
-    ent.moveDur = MOVE_SLIDE;
+    ent.moveT = duration;
+    ent.moveDur = duration;
   }
 
   function visualPos(ent) {
@@ -1142,9 +1165,11 @@
     if (!isWalkable(nx, ny)) return false;
     if (entityAt(nx, ny)) return false;
     if (crateAt(nx, ny)) return false;
-    beginSlide(p, nx, ny);
+    const touchHeld = document.body.classList.contains("mode-touch") && heldDirs.size > 0;
+    const moveDuration = touchHeld ? 0.22 : MOVE_SLIDE;
+    beginSlide(p, nx, ny, moveDuration);
     collectPickupsAt(nx, ny);
-    moveCooldown = MOVE_SLIDE * 0.85;
+    moveCooldown = moveDuration * 0.92;
     if (game.dungeon.map[p.y][p.x] === TILES.STAIRS) nextFloor();
     return true;
   }
@@ -2771,8 +2796,11 @@
     let nextW;
     let nextH;
     if (touch) {
-      nextW = 10;
       nextH = 10;
+      const wrap = document.querySelector(".stage-wrap");
+      const rect = wrap ? wrap.getBoundingClientRect() : null;
+      const aspect = rect && rect.height > 0 ? rect.width / rect.height : 1;
+      nextW = Math.max(8, Math.min(18, Math.round(nextH * aspect)));
     } else {
       // Keep ~15 tiles visible vertically; widen horizontally to match aspect
       nextH = 15;
@@ -2797,14 +2825,8 @@
       canvas.style.height = "100%";
       return;
     }
-    const wrap = document.querySelector(".stage-wrap");
-    if (!wrap) return;
-    const rect = wrap.getBoundingClientRect();
-    const side = Math.floor(Math.min(rect.width, rect.height));
-    if (side > 0) {
-      canvas.style.width = side + "px";
-      canvas.style.height = side + "px";
-    }
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
   }
 
   applyInputMode();
