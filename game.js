@@ -191,6 +191,10 @@
   let blockCooldown = 0;
   let spawnGuard = 0;
   let fx = [];
+  let particles = [];
+  let hitStop = 0;
+  let shakePower = 0;
+  let coinsInFlight = 0;
   let projectiles = [];
   let spellShots = [];
   let heldDirs = new Set();
@@ -825,7 +829,7 @@
     els.mpText.textContent = `${Math.max(0, Math.ceil(p.mp))}/${p.maxMp}`;
     els.dmgText.textContent = String(stats.dmg);
     els.rangeText.textContent = String(stats.range);
-    els.coinText.textContent = String(meta.coins);
+    els.coinText.textContent = String(Math.max(0, meta.coins - coinsInFlight));
     els.floorBadge.textContent = `Floor ${game.floor}`;
     els.themeName.textContent = game.dungeon.theme.name;
     els.spellText.textContent = SPELLS[p.spell].name;
@@ -912,6 +916,161 @@
     fx.push({ type, x, y, color, life, max: life, angle: angle || 0 });
   }
 
+  // ===== Game feel: hit-stop, shake, squash, numbers, debris, flying coins =====
+  function calmMotion() {
+    return !!(reducedMotion && reducedMotion.matches);
+  }
+
+  // Seconds on the animation clock, which keeps running through hit-stop
+  function clockNow() {
+    return lastTime / 1000;
+  }
+
+  // Freeze the world for a moment so a hit lands with weight
+  function addHitStop(seconds) {
+    if (calmMotion()) return;
+    hitStop = Math.max(hitStop, seconds);
+  }
+
+  function addShake(power) {
+    if (calmMotion()) return;
+    shakePower = Math.max(shakePower, power);
+  }
+
+  // A springy 0..1 wobble that starts at `since` and settles after `duration`
+  function wobble(since, duration) {
+    if (since == null) return 0;
+    const t = (clockNow() - since) / duration;
+    if (t < 0 || t >= 1) return 0;
+    return Math.sin(t * Math.PI * 2.2) * (1 - t);
+  }
+
+  function addFloatText(x, y, text, color, big) {
+    const life = big ? 0.95 : 0.7;
+    fx.push({
+      type: "number",
+      x: x + (Math.random() - 0.5) * 0.35,
+      y: y - 0.35,
+      color,
+      text,
+      big,
+      life,
+      max: life,
+      angle: 0,
+    });
+  }
+
+  // Highlight, body and shadow colors for the pieces each thing breaks into
+  const DEBRIS = {
+    slime: ["#d6ffe6", "#3ddc84", "#1a9354"],
+    bat: ["#efe4ff", "#b48cff", "#4a1fa8"],
+    skeleton: ["#ffffff", "#f0ebe1", "#a39a86"],
+    ogre: ["#d2f59c", "#7fb33f", "#2a4710"],
+    wraith: ["#eef2ff", "#8aa0e8", "#27326a"],
+    drake: ["#ffd8b8", "#ff6a3d", "#8a1d0c"],
+    crate: ["#f6c590", "#c47b40", "#6a3a18"],
+    bossCrate: ["#e2c2ff", "#9a5ad0", "#3a1656"],
+  };
+
+  function burstDebris(x, y, colors, count, power) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = (0.9 + Math.random() * 1.7) * power;
+      const life = 0.85 + Math.random() * 0.45;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed * 0.75,
+        z: 6 + Math.random() * 8,
+        vz: 70 + Math.random() * 90 * power,
+        size: 1.8 + Math.random() * 2.6 * Math.min(power, 1.4),
+        cube: Math.random() < 0.5,
+        spin: Math.random() * Math.PI,
+        colors,
+        life,
+        max: life,
+      });
+    }
+    if (particles.length > 180) particles.splice(0, particles.length - 180);
+  }
+
+  function updateParticles(dt) {
+    for (const p of particles) {
+      p.life -= dt;
+      p.vz -= 340 * dt;
+      p.z += p.vz * dt;
+      if (p.z <= 0) {
+        p.z = 0;
+        if (p.vz < 0) p.vz = -p.vz * 0.42;
+        p.vx *= 0.55;
+        p.vy *= 0.55;
+      }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.spin += p.vx * dt * 4;
+    }
+    particles = particles.filter((p) => p.life > 0);
+  }
+
+  // Coins arc from where they dropped to the coin counter, which counts up
+  // as each one lands.
+  function flyCoins(amount, from) {
+    const target = els.coinText;
+    if (calmMotion() || !target || !target.getClientRects().length) return;
+    if (typeof document.body.animate !== "function") return;
+    const box = canvas.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const end = target.getBoundingClientRect();
+    const sx = box.left + ((from.x - camX) * TILE + TILE / 2) * (box.width / CANVAS_W);
+    const sy = box.top + ((from.y - camY) * TILE + TILE / 2) * (box.height / CANVAS_H);
+    const tx = end.left + end.width / 2;
+    const ty = end.top + end.height / 2;
+    const pieces = Math.min(amount, 6);
+    let left = amount;
+    for (let i = 0; i < pieces; i++) {
+      const share = i === pieces - 1 ? left : Math.floor(amount / pieces);
+      left -= share;
+      coinsInFlight += share;
+      const coin = document.createElement("span");
+      coin.className = "coin-fly";
+      coin.setAttribute("aria-hidden", "true");
+      document.body.appendChild(coin);
+      const mx = sx + (Math.random() - 0.5) * 70;
+      const my = sy - 24 - Math.random() * 40;
+      const flight = coin.animate(
+        [
+          { transform: `translate(${sx}px, ${sy}px) scale(0.3)`, offset: 0 },
+          { transform: `translate(${mx}px, ${my}px) scale(1.1)`, offset: 0.32, easing: "cubic-bezier(0.5, 0, 0.75, 0.4)" },
+          { transform: `translate(${tx}px, ${ty}px) scale(0.6)`, offset: 1 },
+        ],
+        { duration: 620 + i * 70, easing: "ease-out", fill: "both" }
+      );
+      flight.onfinish = () => {
+        coin.remove();
+        coinsInFlight = Math.max(0, coinsInFlight - share);
+        bumpCoinCounter();
+        updateHud();
+      };
+    }
+  }
+
+  function bumpCoinCounter() {
+    const el = els.coinText;
+    if (!el) return;
+    el.classList.remove("coin-bump");
+    void el.offsetWidth;
+    el.classList.add("coin-bump");
+  }
+
+  function clearCoinFlights() {
+    document.querySelectorAll(".coin-fly").forEach((coin) => {
+      if (coin.getAnimations) coin.getAnimations().forEach((a) => a.cancel());
+      coin.remove();
+    });
+    coinsInFlight = 0;
+  }
+
   function createRunStats() {
     return {
       deepestFloor: 1,
@@ -924,9 +1083,10 @@
     };
   }
 
-  function gainCoins(amount) {
+  function gainCoins(amount, from) {
     meta.coins += amount;
     if (run) run.coinsCollected += amount;
+    if (from && amount > 0) flyCoins(amount, from);
   }
 
   function recordHit(amount, source) {
@@ -1333,6 +1493,10 @@
     if (dmg > 0) {
       sfx.hurt();
       addFx("flash", game.player.x, game.player.y, "#c44536", 0.25);
+      addFloatText(game.player.x, game.player.y, `-${dmg}`, "#ff4d6d", false);
+      game.player.hurtAt = clockNow();
+      addShake(5);
+      addHitStop(0.06);
     }
     if (game.player.hp <= 0) {
       game.player.hp = 0;
@@ -1348,7 +1512,10 @@
     enemy.hp = 0;
     sfx.kill();
     addFx("burst", enemy.x, enemy.y, enemy.isBoss ? "#d4a84b" : "#c44536", 0.45);
-    gainCoins(enemy.isBoss ? 8 + game.floor : rand(1, 3));
+    burstDebris(enemy.x, enemy.y, DEBRIS[enemy.kind] || DEBRIS.skeleton, enemy.isBoss ? 24 : 12, enemy.isBoss ? 1.5 : 1);
+    addShake(enemy.isBoss ? 8 : 3.5);
+    addHitStop(enemy.isBoss ? 0.14 : 0.07);
+    gainCoins(enemy.isBoss ? 8 + game.floor : rand(1, 3), enemy);
     recordKill(enemy);
     if (enemy.isBoss && !game.bossDown) {
       game.bossDown = true;
@@ -1375,11 +1542,17 @@
   }
 
   function damageEnemy(enemy, amount, color, source) {
+    // A hit that beats the run's previous best gets a bigger, gold number
+    const previousBest = run && run.biggestHit ? run.biggestHit.amount : 0;
     recordHit(amount, source);
+    const record = previousBest > 0 && amount > previousBest;
     enemy.hp -= amount;
     enemy.flash = 0.2;
+    enemy.hitAt = clockNow();
     sfx.hit();
-    addFx("text", enemy.x, enemy.y, color || "#f0e2c4", 0.45);
+    addFloatText(enemy.x, enemy.y, String(amount), record ? "#ffc700" : color || "#ffffff", record || enemy.isBoss);
+    addShake(enemy.isBoss ? 3 : 2);
+    addHitStop(enemy.isBoss ? 0.07 : 0.045);
     if (enemy.hp <= 0) killEnemy(enemy);
   }
 
@@ -1387,9 +1560,11 @@
     crate.hp = 0;
     sfx.crate();
     addFx("burst", crate.x, crate.y, "#c9a227", 0.35);
+    burstDebris(crate.x, crate.y, crate.bossChest ? DEBRIS.bossCrate : DEBRIS.crate, 10, 1);
+    addShake(2.5);
     const bits = [];
     if (crate.coins > 0) {
-      gainCoins(crate.coins);
+      gainCoins(crate.coins, crate);
       bits.push(`+${crate.coins} coins`);
     }
     if (crate.heal > 0) {
@@ -1483,6 +1658,7 @@
     const touchHeld = document.body.classList.contains("mode-touch") && heldDirs.size > 0;
     const moveDuration = touchHeld ? 0.22 : MOVE_SLIDE;
     beginSlide(p, nx, ny, moveDuration);
+    p.landAt = clockNow() + moveDuration;
     collectPickupsAt(nx, ny);
     moveCooldown = moveDuration * 0.92;
     if (game.dungeon.map[p.y][p.x] === TILES.STAIRS) nextFloor();
@@ -1524,6 +1700,7 @@
     const stats = playerStats();
     attackCooldown = meta.weapon === "bow" ? 0.34 : 0.26;
     const p = game.player;
+    p.attackAt = clockNow();
 
     if (meta.weapon === "bow") {
       sfx.bow();
@@ -2053,6 +2230,7 @@
     };
     if (run) run.deepestFloor = Math.max(run.deepestFloor, floor);
     fx = [];
+    particles = [];
     projectiles = [];
     spellShots = [];
     applyThemeUI(dungeon.theme);
@@ -2113,6 +2291,9 @@
     meta = null;
     run = null;
     clearDeathSequence();
+    clearCoinFlights();
+    hitStop = 0;
+    shakePower = 0;
     hideAllMenus();
     showWeaponChoice();
     els.startScreen.classList.remove("hidden");
@@ -2203,6 +2384,7 @@
   }
 
   function updateFx(dt) {
+    updateParticles(dt);
     fx = fx.filter((f) => {
       f.life -= dt;
       return f.life > 0;
@@ -2311,7 +2493,25 @@
     const cy = py + 16;
     const facing = game.player.facing;
     const facingAngle = Math.atan2(facing.y, facing.x);
-    drawGroundShadow(cx, py + 27, 12, 4, 0.45);
+    const p = game.player;
+
+    // Hop between tiles, squash on landing and when hurt, lunge on attack
+    const hop = p.moveT > 0 && p.moveDur > 0 ? Math.sin((1 - p.moveT / p.moveDur) * Math.PI) * 2.5 : 0;
+    const squash = wobble(p.landAt, 0.22) * 0.14 + wobble(p.hurtAt, 0.3) * 0.22;
+    const lungeT = p.attackAt != null ? (clockNow() - p.attackAt) / 0.2 : 1;
+    const lunge = lungeT >= 0 && lungeT < 1 ? Math.sin(lungeT * Math.PI) : 0;
+    let scaleX = 1 + squash;
+    let scaleY = 1 - squash;
+    if (facing.x !== 0) {
+      scaleX += lunge * 0.18;
+      scaleY -= lunge * 0.1;
+    } else {
+      scaleY += lunge * 0.18;
+      scaleX -= lunge * 0.1;
+    }
+    const bx = cx + Math.cos(facingAngle) * lunge * 3;
+    const by = cy - hop + Math.sin(facingAngle) * lunge * 3;
+    drawGroundShadow(cx, py + 27, 12 - hop, 4 - hop * 0.3, 0.45);
 
     let swordSwing = 0;
     if (meta.weapon === "sword" && game.player.attackT > 0) {
@@ -2331,7 +2531,7 @@
     // The sword rides at the player's side so the facing triangle stays clear.
     const drawWeapon = () => {
       ctx.save();
-      ctx.translate(cx, cy);
+      ctx.translate(bx, by);
       ctx.rotate(facingAngle + swordSwing);
       if (meta.weapon === "bow") {
         ctx.lineCap = "round";
@@ -2367,7 +2567,11 @@
 
     const weaponBehind = facing.y < 0;
     if (weaponBehind) drawWeapon();
-    fillBall(cx, cy, 10.5, ["#dce6ff", "#4f74f5", "#16309a"]);
+    ctx.save();
+    ctx.translate(bx, by + 10.5);
+    ctx.scale(scaleX, scaleY);
+    fillBall(0, -10.5, 10.5, ["#dce6ff", "#4f74f5", "#16309a"]);
+    ctx.restore();
     if (!weaponBehind) drawWeapon();
 
     // Facing indicator: a small triangle just in front of the player
@@ -2396,6 +2600,19 @@
 
     const flying = e.kind === "bat" || e.kind === "wraith";
     drawGroundShadow(cx, py + 27, e.isBoss ? 17 : 10, e.isBoss ? 5 : 3.5, flying ? 0.24 : 0.42);
+
+    // Squash when hit; swell up while winding up an attack
+    const hitSquash = wobble(e.hitAt, 0.28) * 0.3;
+    let windup = 0;
+    if (e.attackWindup > 0) {
+      const total = e.isBoss ? 0.8 : 0.58;
+      const progress = 1 - e.attackWindup / total;
+      windup = progress * progress * (0.16 + Math.sin(clockNow() * 40) * 0.03);
+    }
+    ctx.save();
+    ctx.translate(cx, py + 26);
+    ctx.scale(1 + hitSquash + windup, 1 - hitSquash + windup);
+    ctx.translate(-cx, -(py + 26));
 
     if (e.isBoss) {
       if (e.kind === "ogre") {
@@ -2467,6 +2684,7 @@
       ctx.fill();
       fillBall(cx, sy + 13, 7, ["#ffffff", "#f0ebe1", "#b5ab98"]);
     }
+    ctx.restore();
 
     ctx.globalAlpha = 1;
     if (e.isBoss || e.hp < e.maxHp) {
@@ -2487,7 +2705,59 @@
     }
   }
 
+  function drawDebris(cx, cy) {
+    for (const p of particles) {
+      const px = (p.x - cx) * TILE + TILE / 2;
+      const ground = (p.y - cy) * TILE + TILE / 2 + 8;
+      const alpha = Math.min(1, p.life / 0.3);
+      ctx.globalAlpha = alpha;
+      drawGroundShadow(px, ground + p.size * 0.6, p.size * 1.3, p.size * 0.5, 0.3 * Math.max(0.2, 1 - p.z / 30));
+      const py = ground - p.z;
+      if (p.cube) {
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(p.spin);
+        ctx.fillStyle = linear(-p.size, -p.size, p.size, p.size, [[0, p.colors[0]], [0.45, p.colors[1]], [1, p.colors[2]]]);
+        roundRectPath(-p.size, -p.size, p.size * 2, p.size * 2, p.size * 0.35);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        fillBall(px, py, p.size, p.colors);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Damage numbers pop up, bounce to size, drift upward and fade
+  function drawNumbers(cx, cy) {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    for (const f of fx) {
+      if (f.type !== "number") continue;
+      const t = 1 - f.life / f.max;
+      const pop = t < 0.12 ? 0.4 + (t / 0.12) * 0.9 : 1.3 - Math.min(1, (t - 0.12) / 0.16) * 0.3;
+      const size = f.big ? 19 : 14;
+      const px = (f.x - cx) * TILE + TILE / 2;
+      const py = (f.y - cy) * TILE + TILE / 2 - 8 - t * 18;
+      ctx.globalAlpha = Math.min(1, (f.life / f.max) / 0.35);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.scale(pop, pop);
+      ctx.font = `700 ${size}px Fredoka, system-ui, sans-serif`;
+      ctx.strokeStyle = "rgba(20,14,40,0.85)";
+      ctx.lineWidth = f.big ? 5 : 4;
+      ctx.strokeText(f.text, 0, 0);
+      ctx.fillStyle = linear(0, -size / 2, 0, size / 2, [[0, "#ffffff"], [0.55, f.color], [1, f.color]]);
+      ctx.fillText(f.text, 0, 0);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = "alphabetic";
+  }
+
   function drawFx(cx, cy) {
+    drawDebris(cx, cy);
     for (const shot of spellShots) {
       const u = Math.min(1, shot.t / shot.dur);
       const x = shot.x0 + (shot.x1 - shot.x0) * u;
@@ -2539,6 +2809,7 @@
     }
 
     for (const f of fx) {
+      if (f.type === "number") continue;
       const px = (f.x - cx) * TILE + TILE / 2;
       const py = (f.y - cy) * TILE + TILE / 2;
       const a = f.life / f.max;
@@ -2668,17 +2939,23 @@
       }
       ctx.globalAlpha = 1;
     }
+    drawNumbers(cx, cy);
   }
 
   function draw() {
     const s = renderScale;
-    const home = () => ctx.setTransform(s, 0, 0, s, 0, 0);
-    const at = (x, y) => ctx.setTransform(s, 0, 0, s, x * s, y * s);
-    home();
+    ctx.setTransform(s, 0, 0, s, 0, 0);
     const theme = game ? game.dungeon.theme : THEMES[0];
     ctx.fillStyle = theme.bg;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     if (!game) return;
+
+    // Screen shake nudges the whole world, never the background behind it
+    const shx = shakePower ? (Math.random() * 2 - 1) * shakePower : 0;
+    const shy = shakePower ? (Math.random() * 2 - 1) * shakePower : 0;
+    const home = () => ctx.setTransform(s, 0, 0, s, shx * s, shy * s);
+    const at = (x, y) => ctx.setTransform(s, 0, 0, s, (x + shx) * s, (y + shy) * s);
+    home();
 
     const paints = themePaints(theme);
     const { map, size } = game.dungeon;
@@ -2861,6 +3138,7 @@
     home();
 
     drawFx(camX, camY);
+    ctx.setTransform(s, 0, 0, s, 0, 0);
 
     const g = ctx.createRadialGradient(
       CANVAS_W / 2, CANVAS_H / 2, Math.min(CANVAS_W, CANVAS_H) * 0.38,
@@ -2899,7 +3177,14 @@
       if (bannerTimer <= 0) els.banner.classList.add("hidden");
     }
 
-    if (started && game && !game.over && !paused) {
+    // Screen shake fades out on its own, even through hit-stop
+    shakePower = shakePower > 0.1 ? shakePower * Math.exp(-dt * 14) : 0;
+    const frozen = hitStop > 0;
+    if (frozen) hitStop = Math.max(0, hitStop - dt);
+
+    if (frozen && started && game && !game.over && !paused) {
+      // Hit-stop: the world holds still for a few frames so the hit lands
+    } else if (started && game && !game.over && !paused) {
       if (run) run.playTime += dt;
       if (spawnGuard > 0) spawnGuard -= dt;
       if (moveCooldown > 0) moveCooldown -= dt;

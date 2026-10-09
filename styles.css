@@ -3360,3 +3360,36 @@ body.mode-touch .hud-status {
     display: none;
   }
 }
+
+/* --- Coins that fly from a kill to the coin counter --- */
+.coin-fly {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c2 0%, #ffc700 48%, #b98200 100%);
+  pointer-events: none;
+  will-change: transform;
+}
+
+#coinText {
+  display: inline-block;
+}
+
+#coinText.coin-bump {
+  animation: coin-bump 0.28s ease-out;
+}
+
+@keyframes coin-bump {
+  0% { transform: scale(1); color: #ffffff; }
+  40% { transform: scale(1.45); color: #ffc94a; }
+  100% { transform: scale(1); color: #ffffff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #coinText.coin-bump { animation: none; }
+}
