@@ -2637,3 +2637,726 @@ body.run-ending #game {
   .history-life-item { flex-basis: 72px; padding: 4px; }
   .history-records .run-stat { padding: 5px 3px; }
 }
+
+
+/* ===== Bright block skin =====
+   Rounded shapes, one friendly typeface, and shading done with gradients.
+   This layer sits on top of everything above it. */
+:root {
+  --font-display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --font-rune: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --ink: #1e1b3a;
+  --ink-soft: #4a4570;
+  --face-light: linear-gradient(180deg, #ffffff 0%, #ece8f6 calc(100% - 5px), #b4abd0 calc(100% - 5px), #9a90bf 100%);
+  --face-blue: linear-gradient(180deg, #7c9bff 0%, #2f5bea calc(100% - 5px), #1a3399 calc(100% - 5px), #142a80 100%);
+  --face-green: linear-gradient(180deg, #6ff0b8 0%, #12b886 calc(100% - 5px), #0b7d5b calc(100% - 5px), #086447 100%);
+  --face-orange: linear-gradient(180deg, #ffb27a 0%, #ff7a2e calc(100% - 5px), #c2501a calc(100% - 5px), #9c3e12 100%);
+  --face-coral: linear-gradient(180deg, #ff9aa8 0%, #ff4d6d calc(100% - 5px), #c42a4a calc(100% - 5px), #9e1f3a 100%);
+  --face-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+  --skin-shadow: 0 8px 18px rgba(8, 5, 22, 0.32);
+}
+
+body.theme-crypt,
+.overlay.run-summary,
+.overlay.history-screen {
+  --gold: #ffc94a;
+  --gold-dim: #c98f00;
+  --stone: #7e70ae;
+  --cream: #ffffff;
+  --cream-dim: #cfc6ea;
+  --theme-btn: #3a3160;
+  --theme-btn-deep: #211b38;
+  --page: #1d1830;
+}
+
+body.theme-crypt { background: #1d1830; }
+
+body.theme-frost {
+  --gold: #7fd6ff;
+  --gold-dim: #3d8fc0;
+  --stone: #6fa3c8;
+  --cream: #ffffff;
+  --cream-dim: #c4dcef;
+  --theme-btn: #24405e;
+  --theme-btn-deep: #13223a;
+  --page: #13223a;
+  background: #13223a;
+}
+
+body.theme-ember {
+  --gold: #ffb067;
+  --gold-dim: #c9541a;
+  --stone: #a3432f;
+  --cream: #ffffff;
+  --cream-dim: #f0cbbd;
+  --theme-btn: #4a2220;
+  --theme-btn-deep: #2a1210;
+  --page: #2a1210;
+  background: #2a1210;
+}
+
+body.theme-verdant {
+  --gold: #7cf0b0;
+  --gold-dim: #2f9a62;
+  --stone: #4f8a55;
+  --cream: #ffffff;
+  --cream-dim: #c6e3c9;
+  --theme-btn: #23452c;
+  --theme-btn-deep: #122416;
+  --page: #122416;
+  background: #122416;
+}
+
+body.theme-void {
+  --gold: #e0b0ff;
+  --gold-dim: #8a5ad0;
+  --stone: #5a33a8;
+  --cream: #ffffff;
+  --cream-dim: #d8c6f2;
+  --theme-btn: #2e1a5a;
+  --theme-btn-deep: #120a24;
+  --page: #120a24;
+  background: #120a24;
+}
+
+html,
+body.mode-desktop .stage-wrap,
+body.mode-desktop #game {
+  background: var(--page, #1d1830);
+}
+
+#game {
+  image-rendering: auto !important;
+}
+
+/* --- Buttons: rounded gradient faces with a darker lip at the bottom --- */
+.icon-btn,
+.menu-btn,
+.shop-buy,
+.choice-card,
+.spell-btn,
+.pad-btn {
+  border: 0 !important;
+  border-radius: 18px !important;
+  clip-path: none !important;
+  background: var(--face-light) !important;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  text-shadow: none;
+  box-shadow: var(--skin-shadow);
+  transition: transform 0.08s ease, filter 0.12s ease;
+}
+
+.icon-btn::before,
+.menu-btn::before,
+.shop-buy::before,
+.choice-card::before,
+.spell-btn::before,
+.pad-btn::before {
+  display: none;
+}
+
+.icon-btn:active,
+.menu-btn:active,
+.shop-buy:active,
+.choice-card:active,
+.spell-btn:active,
+.pad-btn:active,
+.pad-btn.held {
+  transform: translateY(3px);
+  box-shadow: 0 3px 8px rgba(8, 5, 22, 0.3);
+}
+
+.menu-btn {
+  min-height: 52px;
+  font-size: 1.05rem;
+}
+
+.menu-btn.primary,
+.shop-buy {
+  background: var(--face-blue) !important;
+  color: #ffffff !important;
+}
+
+.menu-btn.danger {
+  background: var(--face-coral) !important;
+  color: #ffffff !important;
+}
+
+.icon-btn {
+  min-height: 44px;
+  background: var(--face-glass) !important;
+  color: #ffffff !important;
+  font-size: 0.9rem;
+  box-shadow: none;
+}
+
+body.mode-touch .icon-btn {
+  border-radius: 14px !important;
+}
+
+.pad-btn.action {
+  color: #ffffff;
+}
+
+.pad-btn.attack { background: var(--face-blue) !important; }
+.pad-btn.block { background: var(--face-green) !important; }
+.pad-btn.cast { background: var(--face-orange) !important; }
+
+.pad-btn.action .btn-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+}
+
+.pad-btn.action .btn-sub {
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.pad-btn.dir {
+  color: var(--ink);
+}
+
+.spell-btn {
+  background: var(--face-glass) !important;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.spell-btn.active {
+  background: var(--face-orange) !important;
+  color: #ffffff !important;
+}
+
+.spell-btn .spell-glyph,
+.spell-btn[data-spell="fire"] .spell-glyph {
+  color: #ffffff;
+}
+
+.spell-btn .spell-name {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+.spell-btn .spell-cost {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.choice-card {
+  color: var(--ink);
+}
+
+.choice-card strong,
+.choice-icon,
+.spell-choice-glyph,
+.spell-choice-glyph .ui-icon {
+  color: #2f5bea;
+}
+
+.choice-card span:last-child {
+  color: var(--ink-soft);
+}
+
+/* --- HUD --- */
+.brand {
+  color: #ffffff;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+}
+
+.floor-chip {
+  font-family: var(--font-display);
+  color: var(--cream-dim);
+}
+
+.theme-name {
+  color: var(--gold);
+}
+
+body.mode-desktop .hud-overlay {
+  background: linear-gradient(180deg, rgba(14, 10, 30, 0.72) 0%, rgba(14, 10, 30, 0.3) 70%, rgba(14, 10, 30, 0) 100%);
+}
+
+.stat-label {
+  letter-spacing: 0.04em;
+  color: var(--cream-dim);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.bar-track,
+body.mode-desktop .bar-track {
+  border: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(255, 255, 255, 0.1));
+  box-shadow: none;
+}
+
+.bar-fill::before,
+.bar-fill::after {
+  display: none;
+}
+
+.bar-fill.hp {
+  background: linear-gradient(180deg, #ff9db0 0%, #ff4d6d 55%, #d6264a 100%);
+  box-shadow: none;
+}
+
+.bar-fill.mp {
+  background: linear-gradient(180deg, #c9d6ff 0%, #7c9bff 55%, #4a6ee8 100%);
+  box-shadow: none;
+}
+
+.stats-bar,
+body.mode-desktop .stats-bar {
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+  backdrop-filter: none;
+}
+
+.stats-item .stat-value.blocking {
+  color: #7cf0b0;
+}
+
+body.mode-touch .stage-wrap {
+  border: 0;
+  border-radius: 22px;
+  background: var(--page, #1d1830);
+  box-shadow: 0 10px 26px rgba(4, 2, 12, 0.45);
+}
+
+body.mode-touch .hud-status {
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--theme-btn), var(--theme-btn-deep));
+}
+
+.banner {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(58, 49, 96, 0.96), rgba(30, 27, 58, 0.96));
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(4, 2, 12, 0.4);
+}
+
+.hint,
+.joystick-wrap small {
+  color: var(--cream-dim);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.joystick,
+.joystick.active {
+  border: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.16) 100%);
+  box-shadow: none;
+}
+
+.joystick-knob {
+  border: 0;
+  background: radial-gradient(circle at 38% 32%, #ffffff 0%, #ece8f6 45%, #a89ec8 100%);
+  box-shadow: 0 6px 14px rgba(4, 2, 12, 0.4);
+}
+
+.joystick-mark {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Overlays and panels --- */
+.overlay {
+  background: radial-gradient(ellipse at 50% 40%, rgba(58, 49, 96, 0.55), rgba(14, 10, 30, 0.92) 70%);
+}
+
+.overlay-card {
+  border: 0 !important;
+  border-radius: 28px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-btn) 90%, #ffffff 10%), var(--theme-btn-deep)) !important;
+  box-shadow: 0 24px 60px rgba(4, 2, 14, 0.6) !important;
+}
+
+.overlay-card::before,
+.overlay-card::after {
+  display: none;
+}
+
+.overlay-card h2 {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+}
+
+.overlay-card h3 {
+  color: var(--gold);
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.howto {
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  box-shadow: none;
+}
+
+.howto kbd,
+.welcome-controls kbd {
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
+  color: #ffffff;
+  font-family: var(--font-display);
+}
+
+.spell-key-list {
+  color: var(--gold);
+}
+
+.spellbook-entry {
+  border-left: 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+}
+
+.spellbook-cost {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(124, 155, 255, 0.35), rgba(124, 155, 255, 0.18));
+  color: #dce6ff;
+}
+
+.theme-swatch {
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+}
+
+.theme-swatch canvas {
+  image-rendering: auto;
+}
+
+.shop-item {
+  border: 0;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(var(--shop-color-rgb), 0.24), rgba(255, 255, 255, 0.04));
+  box-shadow: none;
+}
+
+.shop-item p {
+  color: var(--cream-dim);
+}
+
+.shop-category {
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+}
+
+/* --- Welcome gate: stone block doors and a rounded panel --- */
+.door-face {
+  border: 0;
+  box-shadow: inset -14px 0 30px rgba(0, 0, 0, 0.35);
+}
+
+.door-wood {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0) 16%, rgba(0, 0, 0, 0) 84%, rgba(0, 0, 0, 0.3)),
+    repeating-linear-gradient(180deg,
+      color-mix(in srgb, var(--stone) 88%, #ffffff 12%) 0 54px,
+      color-mix(in srgb, var(--stone) 70%, #000000 30%) 54px 60px),
+    var(--stone);
+}
+
+.door-grain,
+.door-band,
+.door-rivets,
+.door-hinge,
+.door-ring {
+  display: none;
+}
+
+.welcome-content {
+  padding: 0;
+  background: none;
+  clip-path: none;
+  box-shadow: none;
+}
+
+.welcome-panel-face {
+  border-radius: 30px;
+  clip-path: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-btn) 90%, #ffffff 10%), var(--theme-btn-deep));
+  box-shadow: 0 24px 60px rgba(4, 2, 14, 0.6);
+}
+
+.welcome-panel-face::before,
+.welcome-panel-face::after {
+  display: none;
+}
+
+.welcome-kicker {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.welcome-content h2 {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+.welcome-control-group,
+.welcome-mobile-intro {
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+}
+
+.welcome-control-group strong,
+.welcome-mobile-intro strong {
+  color: var(--gold);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  letter-spacing: 0.04em;
+}
+
+.welcome-control-group span {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.welcome-controls small {
+  color: var(--cream-dim);
+}
+
+.welcome-touch-icons span {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+}
+
+/* --- Run summary and history --- */
+.death-veil {
+  background: radial-gradient(ellipse at 50% 45%, rgba(20, 14, 40, 0.6) 0%, rgba(10, 6, 24, 0.92) 55%, #07040f 100%);
+}
+
+.run-card .run-title {
+  letter-spacing: 0.04em;
+}
+
+.run-peak {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+.run-best-badge {
+  border-radius: 999px;
+  clip-path: none;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
+.run-stat,
+.history-life-item {
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  box-shadow: none;
+}
+
+.run-stat-value {
+  color: #ffffff;
+}
+
+.history-toggle {
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.history-toggle-btn {
+  border-radius: 12px;
+  background: transparent;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.history-toggle-btn + .history-toggle-btn {
+  border-left: 0;
+}
+
+.history-toggle-btn[aria-pressed="true"] {
+  background: linear-gradient(180deg, #ffffff, #ddd6f0);
+  color: var(--ink);
+}
+
+.history-run {
+  border-bottom: 0;
+  border-radius: 16px;
+  margin-bottom: 6px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+}
+
+.history-run.is-latest {
+  background: linear-gradient(180deg, rgba(255, 201, 74, 0.2), rgba(255, 201, 74, 0.06));
+  box-shadow: none;
+}
+
+.history-rank {
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+  color: #ffffff;
+}
+
+.history-run:first-child .history-rank {
+  background: radial-gradient(circle at 35% 30%, #fff2b0 0%, #ffc700 50%, #c98f00 100%);
+  color: var(--ink);
+}
+
+.history-run-title {
+  letter-spacing: 0.03em;
+}
+
+.history-tag {
+  border-radius: 999px;
+  color: var(--ink);
+  letter-spacing: 0.03em;
+}
+
+.run-actions .run-title-btn {
+  color: var(--ink);
+}
+
+.run-actions .run-retry {
+  letter-spacing: 0.02em;
+}
+
+/* The bevelled buttons drew their focus ring on a pseudo-element that this skin hides */
+.icon-btn:focus-visible,
+.menu-btn:focus-visible,
+.shop-buy:focus-visible,
+.choice-card:focus-visible,
+.spell-btn:focus-visible,
+.pad-btn:focus-visible,
+.run-actions .menu-btn:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* --- Portrait phones: the map takes most of the screen ---
+   Health, mana and stats float over the top of the map, and the controls
+   tighten into one short band under it. */
+@media (orientation: portrait) {
+  body.mode-touch #app {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  body.mode-touch .hud-top { grid-row: 1; grid-column: 1; }
+  body.mode-touch .stage-wrap { grid-row: 2; grid-column: 1; }
+  body.mode-touch .controls { grid-row: 3; grid-column: 1; }
+
+  body.mode-touch .hud-status {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: start;
+    z-index: 3;
+    gap: 4px;
+    padding: 8px 10px 16px;
+    border-radius: 22px 22px 0 0;
+    background: linear-gradient(180deg, rgba(14, 10, 30, 0.85) 0%, rgba(14, 10, 30, 0.6) 62%, rgba(14, 10, 30, 0) 100%);
+    pointer-events: none;
+  }
+
+  body.mode-touch .stats-bar {
+    flex-wrap: nowrap;
+    padding: 2px 2px 0;
+    background: none;
+  }
+
+  /* The spell row and the weapon you chose already show these two */
+  body.mode-touch .stats-item:has(#spellText),
+  body.mode-touch .stats-item:has(#weaponText) {
+    display: none;
+  }
+
+  body.mode-touch .controls {
+    gap: 8px;
+  }
+
+  body.mode-touch .spell-btn {
+    min-height: 46px;
+    flex-direction: row;
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  body.mode-touch .spell-btn .spell-glyph .ui-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  body.mode-touch .spell-btn .spell-glyph.icon-text {
+    min-width: 1.15rem;
+    font-size: 1.15rem;
+  }
+
+  body.mode-touch .spell-btn .spell-name {
+    font-size: 0.95rem;
+  }
+
+  body.mode-touch .spell-btn .spell-cost {
+    font-size: 0.72rem;
+  }
+
+  body.mode-touch .action-pad {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+  }
+
+  body.mode-touch .joystick-wrap {
+    min-height: 0;
+  }
+
+  body.mode-touch .joystick {
+    width: min(36vw, 140px);
+  }
+
+  body.mode-touch .joystick-wrap small {
+    display: none;
+  }
+
+  body.mode-touch .combat-pad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    height: min(36vw, 140px);
+  }
+
+  body.mode-touch #btnAttack {
+    grid-column: 1 / -1;
+  }
+
+  body.mode-touch .pad-btn.action {
+    min-height: 0;
+  }
+
+  body.mode-touch .pad-btn.action .btn-sub {
+    display: none;
+  }
+}
