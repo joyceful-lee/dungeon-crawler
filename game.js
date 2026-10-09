@@ -117,8 +117,15 @@
     spellbookScreen: document.getElementById("spellbookScreen"),
     shopScreen: document.getElementById("shopScreen"),
     deathScreen: document.getElementById("deathScreen"),
+    deathCard: document.getElementById("deathCard"),
+    deathVeil: document.getElementById("deathVeil"),
     deathTitle: document.getElementById("deathTitle"),
     deathBody: document.getElementById("deathBody"),
+    deathPeak: document.getElementById("deathPeak"),
+    deathStats: document.getElementById("deathStats"),
+    deathBest: document.getElementById("deathBest"),
+    deathBestBadge: document.getElementById("deathBestBadge"),
+    deathBestText: document.getElementById("deathBestText"),
     shopCoins: document.getElementById("shopCoins"),
     shopGrid: document.getElementById("shopGrid"),
     spellKeyList: document.getElementById("spellKeyList"),
@@ -139,6 +146,16 @@
     btnCloseShop: document.getElementById("btnCloseShop"),
     btnRefreshShop: document.getElementById("btnRefreshShop"),
     btnDeathRestart: document.getElementById("btnDeathRestart"),
+    btnDeathTitle: document.getElementById("btnDeathTitle"),
+    btnDeathHistory: document.getElementById("btnDeathHistory"),
+    btnWelcomeHistory: document.getElementById("btnWelcomeHistory"),
+    btnPauseHistory: document.getElementById("btnPauseHistory"),
+    btnCloseHistory: document.getElementById("btnCloseHistory"),
+    historyScreen: document.getElementById("historyScreen"),
+    historyLifetime: document.getElementById("historyLifetime"),
+    historyRecords: document.getElementById("historyRecords"),
+    historyRunsTitle: document.getElementById("historyRunsTitle"),
+    historyList: document.getElementById("historyList"),
     pickSword: document.getElementById("pickSword"),
     pickBow: document.getElementById("pickBow"),
     btnEnterCrypt: document.getElementById("btnEnterCrypt"),
@@ -173,6 +190,34 @@
   let musicTimer = null;
   let musicStep = 0;
   let pendingWeapon = null;
+  let run = null;
+  let deathSeq = null;
+  let swallowNextClick = false;
+
+  const BEST_FLOOR_KEY = "cryptDepths.bestFloor";
+  const HISTORY_KEY = "cryptDepths.runHistory";
+  // Older runs are trimmed past this many, but the best runs are always kept
+  const HISTORY_LIMIT = 60;
+  const HISTORY_KEEP_BEST = 10;
+  const HISTORY_SHOWN = 10;
+  let historyView = "best";
+  let historyReturnFocus = null;
+  let lastRecordedRunId = 0;
+  const reducedMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+
+  const BOSS_NAMES = {
+    ogre: "Crypt Ogre",
+    wraith: "Grave Wraith",
+    drake: "Ash Drake",
+  };
+
+  const HIT_SOURCES = {
+    sword: { label: "Sword", phrase: "Your sword cleaved a foe" },
+    bow: { label: "Bow", phrase: "Your arrow pierced a foe" },
+    fire: { label: "Fire", phrase: "Your fire spell scorched a foe" },
+    frost: { label: "Frost", phrase: "Your frost spell struck a foe" },
+    bolt: { label: "Bolt", phrase: "Your lightning bolt struck a foe" },
+  };
 
   function ensureAudio() {
     if (audioReady && audioCtx) return audioCtx;
@@ -907,6 +952,7 @@
     els.shopScreen.classList.add("hidden");
     els.spellbookScreen.classList.add("hidden");
     els.deathScreen.classList.add("hidden");
+    els.historyScreen.classList.add("hidden");
   }
 
   function updateHud() {
@@ -1006,6 +1052,415 @@
     fx.push({ type, x, y, color, life, max: life, angle: angle || 0 });
   }
 
+  function createRunStats() {
+    return {
+      deepestFloor: 1,
+      bossesDefeated: 0,
+      enemiesDefeated: 0,
+      biggestHit: null,
+      coinsCollected: 0,
+      playTime: 0,
+      lastBoss: null,
+    };
+  }
+
+  function gainCoins(amount) {
+    meta.coins += amount;
+    if (run) run.coinsCollected += amount;
+  }
+
+  function recordHit(amount, source) {
+    if (!run || !HIT_SOURCES[source] || amount <= 0) return;
+    if (!run.biggestHit || amount > run.biggestHit.amount) {
+      run.biggestHit = { amount, source, floor: game.floor };
+    }
+  }
+
+  function recordKill(enemy) {
+    if (!run) return;
+    if (enemy.isBoss) {
+      run.bossesDefeated += 1;
+      run.lastBoss = { name: BOSS_NAMES[enemy.kind] || "crypt guardian", floor: game.floor };
+    } else {
+      run.enemiesDefeated += 1;
+    }
+  }
+
+  function readBestFloor() {
+    try {
+      const value = parseInt(window.localStorage.getItem(BEST_FLOOR_KEY), 10);
+      return value > 0 ? value : 0;
+    } catch (_err) {
+      return 0;
+    }
+  }
+
+  function saveBestFloor(floor) {
+    try {
+      window.localStorage.setItem(BEST_FLOOR_KEY, String(floor));
+    } catch (_err) {
+      /* storage can be unavailable in private browsing */
+    }
+  }
+
+  function formatRunTime(seconds) {
+    const total = Math.max(0, Math.round(seconds));
+    const hours = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = String(total % 60).padStart(2, "0");
+    return hours > 0 ? `${hours}:${String(mins).padStart(2, "0")}:${secs}` : `${mins}:${secs}`;
+  }
+
+  function plural(count, one, many) {
+    return `${count} ${count === 1 ? one : many}`;
+  }
+
+  function emptyHistory() {
+    return {
+      runs: [],
+      lifetime: {
+        runs: 0,
+        enemiesDefeated: 0,
+        bossesDefeated: 0,
+        coinsCollected: 0,
+        playTime: 0,
+        records: {
+          deepestFloor: 0,
+          mostBosses: 0,
+          mostEnemies: 0,
+          mostCoins: 0,
+          longestRun: 0,
+          biggestHit: null,
+        },
+      },
+    };
+  }
+
+  function readHistory() {
+    const fresh = emptyHistory();
+    try {
+      const data = JSON.parse(window.localStorage.getItem(HISTORY_KEY));
+      if (data && Array.isArray(data.runs) && data.lifetime) {
+        return {
+          runs: data.runs,
+          lifetime: { ...fresh.lifetime, ...data.lifetime, records: { ...fresh.lifetime.records, ...data.lifetime.records } },
+        };
+      }
+    } catch (_err) {
+      /* fall through to an empty history */
+    }
+    return fresh;
+  }
+
+  function writeHistory(history) {
+    try {
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (_err) {
+      /* storage can be unavailable in private browsing */
+    }
+  }
+
+  function compareRuns(a, b) {
+    return (
+      b.deepestFloor - a.deepestFloor ||
+      b.bossesDefeated - a.bossesDefeated ||
+      b.enemiesDefeated - a.enemiesDefeated ||
+      b.coinsCollected - a.coinsCollected ||
+      a.endedAt - b.endedAt
+    );
+  }
+
+  function recordRunInHistory(r, title, peak) {
+    const history = readHistory();
+    const entry = {
+      id: Date.now(),
+      endedAt: Date.now(),
+      weapon: meta ? meta.weapon : "sword",
+      spells: meta ? meta.spellOrder.slice() : [],
+      deepestFloor: r.deepestFloor,
+      bossesDefeated: r.bossesDefeated,
+      enemiesDefeated: r.enemiesDefeated,
+      coinsCollected: r.coinsCollected,
+      playTime: Math.round(r.playTime),
+      biggestHit: r.biggestHit ? { amount: r.biggestHit.amount, source: r.biggestHit.source } : null,
+      title,
+      peak,
+    };
+    history.runs.push(entry);
+    if (history.runs.length > HISTORY_LIMIT) {
+      const keep = new Set(history.runs.slice().sort(compareRuns).slice(0, HISTORY_KEEP_BEST));
+      const oldest = history.runs.findIndex((x) => !keep.has(x));
+      if (oldest >= 0) history.runs.splice(oldest, 1);
+    }
+
+    const life = history.lifetime;
+    const rec = life.records;
+    life.runs += 1;
+    life.enemiesDefeated += entry.enemiesDefeated;
+    life.bossesDefeated += entry.bossesDefeated;
+    life.coinsCollected += entry.coinsCollected;
+    life.playTime += entry.playTime;
+    rec.deepestFloor = Math.max(rec.deepestFloor, entry.deepestFloor);
+    rec.mostBosses = Math.max(rec.mostBosses, entry.bossesDefeated);
+    rec.mostEnemies = Math.max(rec.mostEnemies, entry.enemiesDefeated);
+    rec.mostCoins = Math.max(rec.mostCoins, entry.coinsCollected);
+    rec.longestRun = Math.max(rec.longestRun, entry.playTime);
+    if (entry.biggestHit && (!rec.biggestHit || entry.biggestHit.amount > rec.biggestHit.amount)) {
+      rec.biggestHit = entry.biggestHit;
+    }
+
+    writeHistory(history);
+    lastRecordedRunId = entry.id;
+  }
+
+  function statItem(label, value, className) {
+    const item = document.createElement("div");
+    item.className = className;
+    const labelEl = document.createElement("dt");
+    labelEl.className = "run-stat-label";
+    labelEl.textContent = label;
+    const valueEl = document.createElement("dd");
+    valueEl.className = "run-stat-value";
+    valueEl.textContent = value;
+    item.append(labelEl, valueEl);
+    return item;
+  }
+
+  function loadoutText(entry) {
+    const weapon = WEAPONS[entry.weapon] ? WEAPONS[entry.weapon].name : "Sword";
+    const spells = (entry.spells || []).filter((id) => SPELLS[id]).map((id) => SPELLS[id].name);
+    if (!spells.length) return weapon;
+    const list = spells.length > 1 ? `${spells.slice(0, -1).join(", ")} and ${spells[spells.length - 1]}` : spells[0];
+    return `${weapon} with ${list}`;
+  }
+
+  function historyRow(entry, rank) {
+    const row = document.createElement("li");
+    row.className = "history-run";
+    const isLatest = entry.id === lastRecordedRunId && game && game.over;
+    if (isLatest) row.classList.add("is-latest");
+
+    if (rank) {
+      const rankEl = document.createElement("span");
+      rankEl.className = "history-rank";
+      rankEl.textContent = String(rank);
+      rankEl.setAttribute("aria-label", `Rank ${rank}`);
+      row.append(rankEl);
+    }
+
+    const main = document.createElement("div");
+    main.className = "history-run-main";
+
+    const top = document.createElement("div");
+    top.className = "history-run-top";
+    const floor = document.createElement("strong");
+    floor.className = "history-floor";
+    floor.textContent = `Floor ${entry.deepestFloor}`;
+    const title = document.createElement("span");
+    title.className = "history-run-title";
+    title.textContent = entry.title || runTitle(entry);
+    top.append(floor, title);
+    if (isLatest) {
+      const tag = document.createElement("span");
+      tag.className = "history-tag";
+      tag.textContent = "This run";
+      top.append(tag);
+    }
+
+    const peak = document.createElement("p");
+    peak.className = "history-peak";
+    peak.textContent = entry.peak || peakMoment(entry);
+
+    const details = document.createElement("p");
+    details.className = "history-meta";
+    const date = new Date(entry.endedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    details.textContent = [
+      loadoutText(entry),
+      plural(entry.bossesDefeated, "boss", "bosses"),
+      plural(entry.enemiesDefeated, "enemy", "enemies"),
+      plural(entry.coinsCollected, "coin", "coins"),
+      formatRunTime(entry.playTime),
+      date,
+    ].join(" · ");
+
+    main.append(top, peak, details);
+    row.append(main);
+    return row;
+  }
+
+  function renderHistory() {
+    const history = readHistory();
+    const life = history.lifetime;
+    const rec = life.records;
+    const deepest = Math.max(rec.deepestFloor, readBestFloor());
+
+    els.historyLifetime.replaceChildren(
+      statItem("Runs played", String(life.runs), "history-life-item"),
+      statItem("Time in the crypt", formatRunTime(life.playTime), "history-life-item"),
+      statItem("Enemies defeated", String(life.enemiesDefeated), "history-life-item"),
+      statItem("Bosses defeated", String(life.bossesDefeated), "history-life-item"),
+      statItem("Coins collected", String(life.coinsCollected), "history-life-item")
+    );
+
+    const hit = rec.biggestHit;
+    els.historyRecords.replaceChildren(
+      statItem("Deepest floor", deepest ? String(deepest) : "None yet", "run-stat"),
+      statItem("Most bosses in a run", String(rec.mostBosses), "run-stat"),
+      statItem("Most enemies in a run", String(rec.mostEnemies), "run-stat"),
+      statItem("Biggest hit", hit && HIT_SOURCES[hit.source] ? `${hit.amount} with ${HIT_SOURCES[hit.source].label}` : "None yet", "run-stat"),
+      statItem("Most coins in a run", String(rec.mostCoins), "run-stat"),
+      statItem("Longest run", formatRunTime(rec.longestRun), "run-stat")
+    );
+
+    els.historyRunsTitle.textContent = historyView === "best" ? "Best runs" : "Recent runs";
+    document.querySelectorAll("[data-history-view]").forEach((btn) => {
+      btn.setAttribute("aria-pressed", btn.dataset.historyView === historyView ? "true" : "false");
+    });
+
+    const runs = historyView === "best"
+      ? history.runs.slice().sort(compareRuns).slice(0, HISTORY_SHOWN)
+      : history.runs.slice(-HISTORY_SHOWN).reverse();
+    if (!runs.length) {
+      const empty = document.createElement("li");
+      empty.className = "history-empty";
+      empty.textContent = "No runs have been recorded yet. Your next descent will appear here.";
+      els.historyList.replaceChildren(empty);
+    } else {
+      els.historyList.replaceChildren(
+        ...runs.map((entry, index) => historyRow(entry, historyView === "best" ? index + 1 : 0))
+      );
+    }
+    els.historyList.scrollTop = 0;
+  }
+
+  function openHistory() {
+    historyReturnFocus = document.activeElement;
+    renderHistory();
+    els.historyScreen.classList.remove("hidden");
+    els.btnCloseHistory.focus({ preventScroll: true });
+  }
+
+  function closeHistory() {
+    els.historyScreen.classList.add("hidden");
+    if (historyReturnFocus && document.body.contains(historyReturnFocus)) {
+      historyReturnFocus.focus({ preventScroll: true });
+    }
+    historyReturnFocus = null;
+  }
+
+  function setHistoryView(view) {
+    historyView = view;
+    renderHistory();
+  }
+
+  function peakMoment(r) {
+    if (r.lastBoss) return `You brought down the ${r.lastBoss.name} on floor ${r.lastBoss.floor}.`;
+    if (r.biggestHit) {
+      const hit = r.biggestHit;
+      return `${HIT_SOURCES[hit.source].phrase} for ${hit.amount} damage on floor ${hit.floor}.`;
+    }
+    if (r.deepestFloor > 1) return `You made it down to floor ${r.deepestFloor}.`;
+    return "You took your first steps into the crypt.";
+  }
+
+  function runTitle(r) {
+    if (r.bossesDefeated >= 5 || r.deepestFloor >= 6) return "A Legendary Descent";
+    if (r.bossesDefeated >= 2) return "A Hard-Won Descent";
+    if (r.bossesDefeated === 1) return "A Worthy Delve";
+    if (r.enemiesDefeated >= 3) return "A Brave Beginning";
+    return "The Crypt Wins This Time";
+  }
+
+  function renderRunSummary() {
+    const r = run || createRunStats();
+    r.deepestFloor = Math.max(r.deepestFloor, game.floor);
+    const prevBest = readBestFloor();
+    const newBest = r.deepestFloor > prevBest && (prevBest > 0 || r.deepestFloor > 1);
+    if (r.deepestFloor > prevBest) saveBestFloor(r.deepestFloor);
+
+    els.deathBody.textContent = `Your run ended on floor ${game.floor}.`;
+    els.deathTitle.textContent = runTitle(r);
+    els.deathPeak.textContent = peakMoment(r);
+
+    const hit = r.biggestHit;
+    const stats = [
+      ["Deepest floor", String(r.deepestFloor)],
+      ["Bosses defeated", String(r.bossesDefeated)],
+      ["Enemies defeated", String(r.enemiesDefeated)],
+      ["Biggest hit", hit ? `${hit.amount} with ${HIT_SOURCES[hit.source].label}` : "None"],
+      ["Coins collected", String(r.coinsCollected)],
+      ["Time in the crypt", formatRunTime(r.playTime)],
+    ];
+    els.deathStats.replaceChildren(
+      ...stats.map(([label, value], index) => {
+        const item = statItem(label, value, "run-stat reveal");
+        item.style.setProperty("--i", String(index + 4));
+        return item;
+      })
+    );
+    recordRunInHistory(r, els.deathTitle.textContent, els.deathPeak.textContent);
+
+    els.deathBest.classList.toggle("new-best", newBest);
+    els.deathBestBadge.classList.toggle("hidden", !newBest);
+    if (newBest && prevBest > 0) {
+      els.deathBestText.textContent = `You went deeper than ever before. Your old best was floor ${prevBest}.`;
+    } else if (newBest) {
+      els.deathBestText.textContent = `Floor ${r.deepestFloor} is your first personal best.`;
+    } else if (r.deepestFloor === prevBest) {
+      els.deathBestText.textContent = `You matched your personal best of floor ${prevBest}.`;
+    } else {
+      els.deathBestText.textContent = `Your personal best is floor ${Math.max(prevBest, r.deepestFloor)}.`;
+    }
+  }
+
+  function startDeathSequence() {
+    const calm = !!(reducedMotion && reducedMotion.matches);
+    clearDeathSequence();
+    renderRunSummary();
+    deathSeq = { slow: !calm, calm, timers: [], startedAt: performance.now() };
+    addFx("burst", game.player.x, game.player.y, "#c44536", 0.9);
+    els.deathScreen.classList.add("revealing");
+    els.deathVeil.classList.remove("hidden");
+    void els.deathVeil.offsetWidth;
+    els.deathVeil.classList.add("on");
+    document.body.classList.add("run-ending");
+    deathSeq.timers.push(window.setTimeout(revealRunSummary, calm ? 250 : 650));
+  }
+
+  function revealRunSummary() {
+    if (!deathSeq) return;
+    deathSeq.slow = false;
+    els.deathScreen.classList.remove("hidden");
+    deathSeq.timers.push(window.setTimeout(settleDeathSequence, deathSeq.calm ? 300 : 1150));
+  }
+
+  function settleDeathSequence() {
+    if (!deathSeq) return;
+    deathSeq.timers.forEach((id) => window.clearTimeout(id));
+    deathSeq = null;
+    els.deathVeil.classList.add("on");
+    els.deathScreen.classList.remove("hidden", "revealing");
+    els.btnDeathRestart.focus({ preventScroll: true });
+  }
+
+  function skipDeathSequence() {
+    // Ignore the first moments so taps and keys still held from combat do not skip the ending
+    if (!deathSeq || performance.now() - deathSeq.startedAt < 350) return false;
+    els.deathVeil.classList.add("instant");
+    els.deathScreen.classList.add("skipped");
+    settleDeathSequence();
+    return true;
+  }
+
+  function clearDeathSequence() {
+    if (deathSeq) deathSeq.timers.forEach((id) => window.clearTimeout(id));
+    deathSeq = null;
+    els.deathVeil.classList.remove("on", "instant");
+    els.deathVeil.classList.add("hidden");
+    els.deathScreen.classList.remove("revealing", "skipped");
+    document.body.classList.remove("run-ending");
+  }
+
   function hurtPlayer(amount) {
     if (!game || game.over || paused) return;
     let dmg = amount;
@@ -1024,9 +1479,7 @@
       game.over = true;
       paused = false;
       hideAllMenus();
-      els.deathTitle.textContent = "You Fell";
-      els.deathBody.textContent = `Reached floor ${game.floor} with ${meta.coins} coins.`;
-      els.deathScreen.classList.remove("hidden");
+      startDeathSequence();
     }
     updateHud();
   }
@@ -1035,7 +1488,8 @@
     enemy.hp = 0;
     sfx.kill();
     addFx("burst", enemy.x, enemy.y, enemy.isBoss ? "#d4a84b" : "#c44536", 0.45);
-    meta.coins += enemy.isBoss ? 8 + game.floor : rand(1, 3);
+    gainCoins(enemy.isBoss ? 8 + game.floor : rand(1, 3));
+    recordKill(enemy);
     if (enemy.isBoss && !game.bossDown) {
       game.bossDown = true;
       const { stairsPos, map } = game.dungeon;
@@ -1060,7 +1514,8 @@
     updateHud();
   }
 
-  function damageEnemy(enemy, amount, color) {
+  function damageEnemy(enemy, amount, color, source) {
+    recordHit(amount, source);
     enemy.hp -= amount;
     enemy.flash = 0.2;
     sfx.hit();
@@ -1074,7 +1529,7 @@
     addFx("burst", crate.x, crate.y, "#c9a227", 0.35);
     const bits = [];
     if (crate.coins > 0) {
-      meta.coins += crate.coins;
+      gainCoins(crate.coins);
       bits.push(`+${crate.coins} coins`);
     }
     if (crate.heal > 0) {
@@ -1251,7 +1706,7 @@
       }
       const enemy = entityAt(cell.x, cell.y);
       if (enemy) {
-        damageEnemy(enemy, stats.dmg + rand(0, 1), "#ffd27a");
+        damageEnemy(enemy, stats.dmg + rand(0, 1), "#ffd27a", "sword");
         hit = true;
       }
     }
@@ -1348,7 +1803,7 @@
       if (shot.extras.crate) {
         breakCrate(shot.extras.crate);
       } else if (shot.target && shot.target.hp > 0) {
-        damageEnemy(shot.target, shot.dmg, shot.color);
+        damageEnemy(shot.target, shot.dmg, shot.color, shot.kind);
         if (shot.kind === "fire") {
           addFx("burst", shot.target.x, shot.target.y, shot.color, 0.45);
           for (let i = 0; i < 6; i++) {
@@ -1363,7 +1818,7 @@
           if (meta.spellEffects.fire) {
             for (const nearby of game.enemies) {
               if (nearby !== shot.target && nearby.hp > 0 && dist(nearby, shot.target) <= 1) {
-                damageEnemy(nearby, Math.max(1, Math.floor(shot.dmg * 0.5)), shot.color);
+                damageEnemy(nearby, Math.max(1, Math.floor(shot.dmg * 0.5)), shot.color, shot.kind);
               }
             }
           }
@@ -1736,6 +2191,7 @@
       bossDown: false,
       over: false,
     };
+    if (run) run.deepestFloor = Math.max(run.deepestFloor, floor);
     fx = [];
     projectiles = [];
     spellShots = [];
@@ -1781,6 +2237,7 @@
   function beginRun(weaponId, spellId) {
     ensureAudio();
     meta = createMeta(weaponId, spellId);
+    run = createRunStats();
     started = true;
     paused = false;
     hideAllMenus();
@@ -1794,9 +2251,17 @@
     paused = false;
     game = null;
     meta = null;
+    run = null;
+    clearDeathSequence();
     hideAllMenus();
     showWeaponChoice();
     els.startScreen.classList.remove("hidden");
+  }
+
+  function returnToTitle() {
+    restartRun();
+    els.startScreen.classList.add("hidden");
+    els.welcomeScreen.classList.remove("opening", "hidden");
   }
 
   function updateProjectiles() {
@@ -1823,7 +2288,7 @@
 
       const enemy = entityAt(bolt.x, bolt.y);
       if (enemy) {
-        damageEnemy(enemy, bolt.dmg, "#ffd27a");
+        damageEnemy(enemy, bolt.dmg, "#ffd27a", "bow");
         continue;
       }
 
@@ -2529,6 +2994,7 @@
     }
 
     if (started && game && !game.over && !paused) {
+      if (run) run.playTime += dt;
       if (spawnGuard > 0) spawnGuard -= dt;
       if (moveCooldown > 0) moveCooldown -= dt;
       if (attackCooldown > 0) attackCooldown -= dt;
@@ -2566,9 +3032,17 @@
       updateCamera(dt);
       updateFx(dt);
     } else if (game) {
-      updateSpellShots(dt);
-      updateFx(dt);
-      updateCamera(dt);
+      // While a run is ending, the world drifts on in slow motion
+      const stepDt = deathSeq && deathSeq.slow ? dt * 0.3 : dt;
+      if (deathSeq) {
+        tickSlide(game.player, stepDt);
+        for (const e of game.enemies) {
+          if (e.hp > 0) tickSlide(e, stepDt);
+        }
+      }
+      updateSpellShots(stepDt);
+      updateFx(stepDt);
+      updateCamera(stepDt);
     }
 
     draw();
@@ -2705,6 +3179,37 @@
     els.btnCloseShop.addEventListener("click", closeShop);
     els.btnRefreshShop.addEventListener("click", refreshShop);
     els.btnDeathRestart.addEventListener("click", restartRun);
+    els.btnDeathTitle.addEventListener("click", returnToTitle);
+    els.btnDeathHistory.addEventListener("click", openHistory);
+    els.btnPauseHistory.addEventListener("click", openHistory);
+    els.btnWelcomeHistory.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      openHistory();
+    });
+    els.btnCloseHistory.addEventListener("click", closeHistory);
+    document.querySelectorAll("[data-history-view]").forEach((btn) => {
+      btn.addEventListener("click", () => setHistoryView(btn.dataset.historyView));
+    });
+
+    // A tap during the ending skips to the summary. The click from that
+    // same tap is swallowed so it cannot land on a summary button.
+    document.addEventListener(
+      "pointerdown",
+      () => {
+        swallowNextClick = skipDeathSequence() === true;
+      },
+      true
+    );
+    document.addEventListener(
+      "click",
+      (ev) => {
+        if (!swallowNextClick) return;
+        swallowNextClick = false;
+        ev.preventDefault();
+        ev.stopPropagation();
+      },
+      true
+    );
     if (els.btnEnterCrypt) {
       els.btnEnterCrypt.addEventListener("click", (ev) => {
         ev.preventDefault();
@@ -2725,6 +3230,18 @@
     };
 
     window.addEventListener("keydown", (ev) => {
+      if (deathSeq) {
+        ev.preventDefault();
+        if (!ev.repeat) skipDeathSequence();
+        return;
+      }
+      if (!els.historyScreen.classList.contains("hidden")) {
+        if (ev.key === "Escape") {
+          ev.preventDefault();
+          closeHistory();
+        }
+        return;
+      }
       if (!els.welcomeScreen.classList.contains("hidden")) {
         if (ev.key === "Enter" || ev.key === " ") {
           ev.preventDefault();

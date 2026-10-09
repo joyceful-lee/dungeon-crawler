@@ -185,7 +185,10 @@
           <p>Drag the movement sigil to explore, tap the combat buttons to fight, and choose spells from the rune bar.</p>
           <div class="welcome-touch-icons" aria-hidden="true"><span>◉ Move</span><span>⚔ Fight</span><span>✦ Cast</span></div>
         </div>
-        <button type="button" class="menu-btn primary enter-btn" id="btnEnterCrypt">Enter the Crypt</button>
+        <div class="welcome-actions">
+          <button type="button" class="menu-btn primary enter-btn" id="btnEnterCrypt">Enter the Crypt</button>
+          <button type="button" class="menu-btn welcome-history-btn" id="btnWelcomeHistory">Run History</button>
+        </div>
       </div>
     </div>
   </div>
@@ -270,6 +273,7 @@
         <button type="button" class="menu-btn primary" id="btnResume">Resume</button>
         <button type="button" class="menu-btn" id="btnSpellbook">Spellbook</button>
         <button type="button" class="menu-btn" id="btnPauseShop">Shop</button>
+        <button type="button" class="menu-btn" id="btnPauseHistory">Run History</button>
         <button type="button" class="menu-btn danger" id="btnPauseRestart">Restart</button>
       </div>
     </div>
@@ -298,12 +302,53 @@
     </div>
   </div>
 
-  <!-- Death -->
-  <div id="deathScreen" class="overlay hidden">
-    <div class="overlay-card">
-      <h2 id="deathTitle">You Fell</h2>
-      <p id="deathBody">The crypt claims another explorer.</p>
-      <button type="button" class="menu-btn primary" id="btnDeathRestart">Try Again</button>
+  <!-- End of run: the dungeon fades behind this veil before the summary arrives -->
+  <div id="deathVeil" class="death-veil hidden" aria-hidden="true"></div>
+
+  <!-- Run summary -->
+  <div id="deathScreen" class="overlay run-summary hidden" role="dialog" aria-modal="true" aria-labelledby="deathTitle" aria-describedby="deathPeak">
+    <div class="overlay-card run-card" id="deathCard">
+      <div class="run-head">
+        <p class="run-kicker reveal" id="deathBody" style="--i:0">Your run has ended.</p>
+        <h2 class="run-title reveal" id="deathTitle" style="--i:1">The Crypt Wins This Time</h2>
+        <p class="run-peak reveal" id="deathPeak" style="--i:2">You took your first steps into the crypt.</p>
+        <div class="run-best reveal" id="deathBest" style="--i:3">
+          <span class="run-best-badge hidden" id="deathBestBadge">New best</span>
+          <span class="run-best-text" id="deathBestText">Your personal best is floor 1.</span>
+        </div>
+      </div>
+      <dl class="run-stats" id="deathStats" aria-label="Highlights from this run"></dl>
+      <div class="run-actions reveal" style="--i:10">
+        <button type="button" class="menu-btn primary run-retry" id="btnDeathRestart">Try Again</button>
+        <button type="button" class="menu-btn run-title-btn" id="btnDeathTitle">Return to Title Screen</button>
+        <button type="button" class="run-history-link" id="btnDeathHistory">See all your runs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Run history -->
+  <div id="historyScreen" class="overlay history-screen hidden" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="overlay-card wide history-card">
+      <h2 id="historyTitle">Run History</h2>
+      <section class="history-section" aria-labelledby="historyLifetimeTitle">
+        <h3 id="historyLifetimeTitle">All runs so far</h3>
+        <dl class="history-lifetime" id="historyLifetime"></dl>
+      </section>
+      <section class="history-section" aria-labelledby="historyRecordsTitle">
+        <h3 id="historyRecordsTitle">Your records</h3>
+        <dl class="run-stats history-records" id="historyRecords"></dl>
+      </section>
+      <section class="history-section history-runs" aria-labelledby="historyRunsTitle">
+        <div class="history-runs-head">
+          <h3 id="historyRunsTitle">Best runs</h3>
+          <div class="history-toggle" role="group" aria-label="Order runs by">
+            <button type="button" class="history-toggle-btn" data-history-view="best" aria-pressed="true">Best</button>
+            <button type="button" class="history-toggle-btn" data-history-view="recent" aria-pressed="false">Recent</button>
+          </div>
+        </div>
+        <ol class="history-list" id="historyList"></ol>
+      </section>
+      <button type="button" class="menu-btn primary history-close" id="btnCloseHistory">Close</button>
     </div>
   </div>
 
