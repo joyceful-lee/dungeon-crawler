@@ -81,29 +81,31 @@
     bolt: { name: "Bolt", cost: 5, color: "#f4d35e", range: 6 },
   };
 
+  const SPELL_ICONS = { fire: "local_fire_department", frost: "ac_unit", bolt: "bolt" };
+
   const WEAPONS = {
     sword: { name: "Sword", baseDmg: 5, baseRange: 1 },
     bow: { name: "Bow", baseDmg: 3, baseRange: 3 },
   };
 
   const SHOP = [
-    { id: "dmg", category: "attack", name: "Sharper Edge", desc: "+1 weapon damage", cost: 12, key: "bonusDmg", amount: 1 },
-    { id: "range", category: "attack", name: "Longer Reach", desc: "+1 attack range", cost: 16, key: "bonusRange", amount: 1 },
-    { id: "maxHp", category: "health", name: "Vitality Charm", desc: "+4 maximum HP", cost: 12, key: "bonusHp", amount: 4 },
-    { id: "heal", category: "health", name: "Moss Tonic", desc: "Restore 10 HP now", cost: 7, effect: "heal", amount: 10, flatCost: true },
-    { id: "maxMp", category: "mana", name: "Mana Crystal", desc: "+3 maximum MP", cost: 12, key: "bonusMp", amount: 3 },
-    { id: "restoreMp", category: "mana", name: "Azure Draught", desc: "Restore 7 MP now", cost: 6, effect: "restoreMp", amount: 7, flatCost: true },
-    { id: "guard", category: "defense", name: "Iron Guard", desc: "Block lasts 0.2s longer", cost: 14, key: "bonusBlock", amount: 0.2 },
-    { id: "spellPower", category: "magic", name: "Runic Focus", desc: "+2 spell damage", cost: 15, key: "bonusSpellDmg", amount: 2 },
-    { id: "spellRange", category: "magic", name: "Far Sigil", desc: "+1 spell range", cost: 13, key: "bonusSpellRange", amount: 1 },
-    { id: "manaEff", category: "mana", name: "Quiet Casting", desc: "Spells cost 1 less MP", cost: 18, key: "manaDiscount", amount: 1, max: 2 },
-    { id: "unlockFire", category: "magic", name: "Tome of Embers", desc: "Unlock the Fire spell", cost: 20, unlockSpell: "fire" },
-    { id: "unlockFrost", category: "magic", name: "Tome of Winter", desc: "Unlock the Frost spell", cost: 20, unlockSpell: "frost" },
-    { id: "unlockBolt", category: "magic", name: "Tome of Storms", desc: "Unlock the Bolt spell", cost: 20, unlockSpell: "bolt" },
-    { id: "fireRune", category: "magic", name: "Ember Rune", desc: "Fire splashes onto nearby foes", cost: 24, spellEffect: "fire" },
-    { id: "frostRune", category: "magic", name: "Rime Rune", desc: "Frost slows for much longer", cost: 24, spellEffect: "frost" },
-    { id: "boltRune", category: "magic", name: "Forked Rune", desc: "Bolt arcs to a second foe", cost: 24, spellEffect: "bolt" },
-    { id: "phaseRune", category: "magic", name: "Phase Rune", desc: "Spells can pass through walls", cost: 28, spellEffect: "phase" },
+    { id: "dmg", category: "attack", name: "Sharper Edge", desc: "Your weapon deals 1 more damage.", cost: 12, key: "bonusDmg", amount: 1 },
+    { id: "range", category: "attack", name: "Longer Reach", desc: "Your attacks reach 1 tile farther.", cost: 16, key: "bonusRange", amount: 1 },
+    { id: "maxHp", category: "health", name: "Vitality Charm", desc: "Your maximum health rises by 4.", cost: 12, key: "bonusHp", amount: 4 },
+    { id: "heal", category: "health", name: "Moss Tonic", desc: "Restores 10 health right away.", cost: 7, effect: "heal", amount: 10, flatCost: true },
+    { id: "maxMp", category: "mana", name: "Mana Crystal", desc: "Your maximum mana rises by 3.", cost: 12, key: "bonusMp", amount: 3 },
+    { id: "restoreMp", category: "mana", name: "Azure Draught", desc: "Restores 7 mana right away.", cost: 6, effect: "restoreMp", amount: 7, flatCost: true },
+    { id: "guard", category: "defense", name: "Iron Guard", desc: "Your block lasts 0.2 seconds longer.", cost: 14, key: "bonusBlock", amount: 0.2 },
+    { id: "spellPower", category: "magic", name: "Runic Focus", desc: "Your spells deal 2 more damage.", cost: 15, key: "bonusSpellDmg", amount: 2 },
+    { id: "spellRange", category: "magic", name: "Far Sigil", desc: "Your spells reach 1 tile farther.", cost: 13, key: "bonusSpellRange", amount: 1 },
+    { id: "manaEff", category: "mana", name: "Quiet Casting", desc: "Your spells cost 1 less mana.", cost: 18, key: "manaDiscount", amount: 1, max: 2 },
+    { id: "unlockFire", category: "magic", name: "Tome of Embers", desc: "Teaches you the Fire spell.", cost: 20, unlockSpell: "fire" },
+    { id: "unlockFrost", category: "magic", name: "Tome of Winter", desc: "Teaches you the Frost spell.", cost: 20, unlockSpell: "frost" },
+    { id: "unlockBolt", category: "magic", name: "Tome of Storms", desc: "Teaches you the Bolt spell.", cost: 20, unlockSpell: "bolt" },
+    { id: "fireRune", category: "magic", name: "Ember Rune", desc: "Your fire splashes onto nearby foes.", cost: 24, spellEffect: "fire" },
+    { id: "frostRune", category: "magic", name: "Rime Rune", desc: "Your frost slows foes for much longer.", cost: 24, spellEffect: "frost" },
+    { id: "boltRune", category: "magic", name: "Forked Rune", desc: "Your bolt arcs to a second foe.", cost: 24, spellEffect: "bolt" },
+    { id: "phaseRune", category: "magic", name: "Phase Rune", desc: "Your spells can pass through walls.", cost: 28, spellEffect: "phase" },
   ];
 
   const canvas = document.getElementById("game");
@@ -113,7 +115,6 @@
 
   const els = {
     floorBadge: document.getElementById("floorBadge"),
-    themeName: document.getElementById("themeName"),
     hpBar: document.getElementById("hpBar"),
     hpText: document.getElementById("hpText"),
     mpBar: document.getElementById("mpBar"),
@@ -123,9 +124,10 @@
     coinText: document.getElementById("coinText"),
     blockText: document.getElementById("blockText"),
     spellText: document.getElementById("spellText"),
-    weaponText: document.getElementById("weaponText"),
+    spellIcon: document.getElementById("spellIcon"),
+    blockStatus: document.getElementById("blockStatus"),
+    attackIcon: document.getElementById("attackIcon"),
     banner: document.getElementById("banner"),
-    hint: document.getElementById("hint"),
     welcomeScreen: document.getElementById("welcomeScreen"),
     startScreen: document.getElementById("startScreen"),
     weaponChoice: document.getElementById("weaponChoice"),
@@ -407,7 +409,7 @@
       window.clearInterval(musicTimer);
       musicTimer = null;
     }
-    els.btnMusic.textContent = musicOn ? "♫ Music On" : "♫ Music Off";
+    els.btnMusic.firstElementChild.textContent = musicOn ? "music_note" : "music_off";
     els.btnMusic.setAttribute("aria-pressed", musicOn ? "true" : "false");
   }
 
@@ -831,20 +833,13 @@
     els.rangeText.textContent = String(stats.range);
     els.coinText.textContent = String(Math.max(0, meta.coins - coinsInFlight));
     els.floorBadge.textContent = `Floor ${game.floor}`;
-    els.themeName.textContent = game.dungeon.theme.name;
     els.spellText.textContent = SPELLS[p.spell].name;
-    els.weaponText.textContent = WEAPONS[meta.weapon].name;
+    els.spellIcon.textContent = SPELL_ICONS[p.spell];
 
-    if (blockTimer > 0) {
-      els.blockText.textContent = "Blocking";
-      els.blockText.classList.add("blocking");
-    } else if (blockCooldown > 0) {
-      els.blockText.textContent = "Wait";
-      els.blockText.classList.remove("blocking");
-    } else {
-      els.blockText.textContent = "Ready";
-      els.blockText.classList.remove("blocking");
-    }
+    // The shield icon shows the block state: lit while blocking, dim while recharging
+    const blockState = blockTimer > 0 ? "blocking" : blockCooldown > 0 ? "wait" : "ready";
+    els.blockStatus.dataset.state = blockState;
+    els.blockText.textContent = { blocking: "Blocking", wait: "Recharging", ready: "Ready" }[blockState];
 
     document.querySelectorAll(".spell-btn").forEach((btn) => {
       const unlocked = !!meta.unlockedSpells[btn.dataset.spell];
@@ -856,9 +851,11 @@
       btn.setAttribute("aria-label", unlocked ? `${SPELLS[btn.dataset.spell].name} spell` : `${SPELLS[btn.dataset.spell].name} spell locked`);
       const cost = Math.max(1, SPELLS[btn.dataset.spell].cost - meta.manaDiscount);
       const costEl = btn.querySelector(".spell-cost");
-      const nameEl = btn.querySelector(".spell-name");
-      if (nameEl) nameEl.textContent = SPELLS[btn.dataset.spell].name;
-      if (costEl) costEl.textContent = unlocked ? `${cost} MP` : "Locked";
+      if (costEl) {
+        costEl.innerHTML = unlocked
+          ? `${cost}<span class="material-symbols-rounded" aria-hidden="true">water_drop</span>`
+          : '<span class="material-symbols-rounded" aria-hidden="true">lock</span>';
+      }
     });
     if (els.spellKeyList) {
       els.spellKeyList.innerHTML = meta.spellOrder
@@ -887,26 +884,20 @@
     for (const pickup of game.pickups) {
       if (pickup.collected || pickup.x !== x || pickup.y !== y) continue;
       if (pickup.type === "health") {
-        if (game.player.hp >= game.player.maxHp) {
-          showBanner("HP already full", 500);
-          continue;
-        }
+        if (game.player.hp >= game.player.maxHp) continue;
         const before = game.player.hp;
         game.player.hp = Math.min(game.player.maxHp, game.player.hp + pickup.amount);
         pickup.collected = true;
         sfx.potion();
-        showBanner(`Potion +${game.player.hp - before} HP`, 750);
+        addFloatText(x, y, `+${game.player.hp - before}`, "#3ddc84", false);
         updateHud();
       } else if (pickup.type === "mana") {
-        if (game.player.mp >= game.player.maxMp) {
-          showBanner("MP already full", 500);
-          continue;
-        }
+        if (game.player.mp >= game.player.maxMp) continue;
         const before = game.player.mp;
         game.player.mp = Math.min(game.player.maxMp, game.player.mp + pickup.amount);
         pickup.collected = true;
         sfx.potion();
-        showBanner(`Potion +${game.player.mp - before} MP`, 750);
+        addFloatText(x, y, `+${game.player.mp - before}`, "#7c9bff", false);
         updateHud();
       }
     }
@@ -1061,6 +1052,15 @@
     el.classList.remove("coin-bump");
     void el.offsetWidth;
     el.classList.add("coin-bump");
+  }
+
+  // Not enough mana: the mana bar shakes instead of a message
+  function shakeManaBar() {
+    const track = els.mpBar && els.mpBar.parentElement;
+    if (!track) return;
+    track.classList.remove("denied");
+    void track.offsetWidth;
+    track.classList.add("denied");
   }
 
   function clearCoinFlights() {
@@ -1294,14 +1294,10 @@
     const details = document.createElement("p");
     details.className = "history-meta";
     const date = new Date(entry.endedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-    details.textContent = [
-      loadoutText(entry),
-      plural(entry.bossesDefeated, "boss", "bosses"),
-      plural(entry.enemiesDefeated, "enemy", "enemies"),
-      plural(entry.coinsCollected, "coin", "coins"),
-      formatRunTime(entry.playTime),
-      date,
-    ].join(" · ");
+    details.textContent =
+      `You carried the ${loadoutText(entry)}, defeated ` +
+      `${plural(entry.bossesDefeated, "boss", "bosses")} and ${plural(entry.enemiesDefeated, "enemy", "enemies")}, ` +
+      `and collected ${plural(entry.coinsCollected, "coin", "coins")} in ${formatRunTime(entry.playTime)} on ${date}.`;
 
     main.append(top, peak, details);
     row.append(main);
@@ -1487,7 +1483,7 @@
     if (blockTimer > 0) {
       dmg = Math.max(0, Math.floor(amount * 0.25));
       sfx.block();
-      showBanner(dmg === 0 ? "Blocked!" : "Glanced!", 500);
+      addFx("ring", game.player.x, game.player.y, "#7cf0b0", 0.4);
     }
     game.player.hp -= dmg;
     if (dmg > 0) {
@@ -1535,8 +1531,6 @@
         (spot.x !== game.player.x || spot.y !== game.player.y)
       ) || { x: bossRoom.x, y: bossRoom.y };
       game.crates.push({ ...rewardSpot, hp: 1, coins: 8 + game.floor * 2, heal: 0, mana: 0, tome: true, bossChest: true });
-      showBanner("Boss down! A relic chest appeared", 1800);
-      if (els.hint) els.hint.textContent = "Stand on the stairs to go deeper";
     }
     updateHud();
   }
@@ -1563,24 +1557,19 @@
     burstDebris(crate.x, crate.y, crate.bossChest ? DEBRIS.bossCrate : DEBRIS.crate, 10, 1);
     addShake(2.5);
     const bits = [];
-    if (crate.coins > 0) {
-      gainCoins(crate.coins, crate);
-      bits.push(`+${crate.coins} coins`);
-    }
+    if (crate.coins > 0) gainCoins(crate.coins, crate);
     if (crate.heal > 0) {
       game.pickups.push({ x: crate.x, y: crate.y, type: "health", amount: crate.heal, collected: false });
-      bits.push("Health potion dropped");
     }
     if (crate.mana > 0) {
       game.pickups.push({ x: crate.x, y: crate.y, type: "mana", amount: crate.mana, collected: false });
-      bits.push("Mana potion dropped");
     }
     if (crate.tome) {
       const locked = Object.keys(SPELLS).filter((id) => !meta.unlockedSpells[id]);
       if (locked.length) {
         const learned = pick(locked);
         unlockSpell(learned);
-        bits.push(`${SPELLS[learned].name} unlocked`);
+        bits.push(`You learned the ${SPELLS[learned].name} spell.`);
       } else {
         const missingRunes = ["fire", "frost", "bolt"].filter((id) =>
           meta.unlockedSpells[id] && !meta.spellEffects[id]
@@ -1589,28 +1578,28 @@
         if (reward === 1) {
           const amount = rand(1, 3);
           meta.bonusSpellDmg += amount;
-          bits.push(`Tome: +${amount} spell damage`);
+          bits.push(`The tome adds ${amount} to your spell damage.`);
         } else if (reward === 2) {
           meta.bonusSpellRange += 1;
-          bits.push("Tome: +1 spell range");
+          bits.push("The tome extends your spell range by 1.");
         } else if (reward === 3) {
           meta.bonusMp += 3;
           game.player.maxMp += 3;
           game.player.mp = Math.min(game.player.maxMp, game.player.mp + 3);
-          bits.push("Tome: +3 maximum MP");
+          bits.push("The tome raises your maximum mana by 3.");
         } else if (missingRunes.length) {
           const rune = pick(missingRunes);
           meta.spellEffects[rune] = true;
-          bits.push(`${SPELLS[rune].name} rune awakened`);
+          bits.push(`The tome awakened your ${SPELLS[rune].name} rune.`);
         } else {
           const amount = rand(1, 3);
           meta.bonusSpellDmg += amount;
-          bits.push(`Tome: +${amount} spell damage`);
+          bits.push(`The tome adds ${amount} to your spell damage.`);
         }
       }
       sfx.tome();
     }
-    showBanner(bits.length ? bits.join(" · ") : "Empty crate", 2600);
+    if (bits.length) showBanner(bits.join(" "), 2600);
     updateHud();
   }
 
@@ -1749,7 +1738,6 @@
     }
     if (!hit) {
       sfx.miss();
-      showBanner("Miss", 350);
     }
     updateHud();
   }
@@ -1759,7 +1747,6 @@
     blockTimer = 0.7 + meta.bonusBlock;
     blockCooldown = 1.35;
     sfx.block();
-    showBanner("Blocking", 400);
     updateHud();
   }
 
@@ -1871,7 +1858,6 @@
               0.4
             );
           }
-          showBanner("Slowed", 450);
         } else {
           addFx("burst", shot.target.x, shot.target.y, shot.color, 0.35);
           if (meta.spellEffects.bolt && !shot.extras.forked) {
@@ -1908,7 +1894,7 @@
     const spellCost = Math.max(1, spell.cost - meta.manaDiscount);
     const spellRange = spell.range + stats.spellRange;
     if (p.mp < spellCost) {
-      showBanner("Not enough MP", 600);
+      shakeManaBar();
       return;
     }
 
@@ -1920,7 +1906,6 @@
       sfx.fire();
       const target = nearestEnemy(spellRange);
       if (!target) {
-        showBanner("No target", 450);
         updateHud();
         return;
       }
@@ -1929,7 +1914,6 @@
       sfx.frost();
       const target = nearestEnemy(spellRange);
       if (!target) {
-        showBanner("No target", 450);
         updateHud();
         return;
       }
@@ -1983,7 +1967,6 @@
           done: false,
           miss: true,
         });
-        showBanner("Bolt missed", 450);
       }
     }
 
@@ -1993,7 +1976,6 @@
   function equipSpell(id) {
     if (!started || !game || game.over || !SPELLS[id] || !meta.unlockedSpells[id]) return;
     game.player.spell = id;
-    showBanner(`${SPELLS[id].name} ready`, 450);
     updateHud();
   }
 
@@ -2038,9 +2020,9 @@
           <strong>${item.name}</strong>
           <span class="shop-category">${item.category}</span>
         </div>
-        <p>${item.desc}${owned && !item.flatCost ? ` (owned ×${owned})` : ""}</p>
+        <p>${item.desc}${owned && !item.flatCost ? ` You own ${owned} already.` : ""}</p>
         <div class="shop-meta">
-          <span>${cost} coins</span>
+          <span class="shop-price"><span class="material-symbols-rounded coin-icon" aria-hidden="true">toll</span>${cost}<span class="visually-hidden"> coins</span></span>
           <button type="button" class="shop-buy" data-id="${item.id}">${sold ? "Sold" : "Buy"}</button>
         </div>
       `;
@@ -2058,10 +2040,7 @@
     if (!item || game.shopPurchased[item.id]) return;
     const owned = meta.purchased[item.id] || 0;
     const cost = shopCost(item);
-    if (meta.coins < cost) {
-      showBanner("Need more coins", 600);
-      return;
-    }
+    if (meta.coins < cost) return;
     meta.coins -= cost;
     game.shopPurchased[item.id] = true;
     meta.purchased[item.id] = owned + 1;
@@ -2077,21 +2056,16 @@
       if (item.effect === "restoreMp") game.player.mp = Math.min(stats.maxMp, game.player.mp + item.amount);
     }
 
-    showBanner(`Bought ${item.name}`, 700);
     renderShop();
     updateHud();
   }
 
   function refreshShop() {
-    if (!meta || !game || meta.coins < 2) {
-      showBanner("Need 2 coins to refresh", 650);
-      return;
-    }
+    if (!meta || !game || meta.coins < 2) return;
     meta.coins -= 2;
     rollShopOffers();
     renderShop();
     updateHud();
-    showBanner("New wares arrived", 600);
   }
 
   function openPause() {
@@ -2145,15 +2119,15 @@
   function renderSpellbook() {
     if (!meta) return;
     const runeNames = {
-      fire: "Ember Rune — fire splashes to adjacent foes",
-      frost: "Rime Rune — frost slows for longer",
-      bolt: "Forked Rune — bolt arcs to a second foe",
-      phase: "Phase Rune — spells can cross walls",
+      fire: "The Ember Rune makes your fire splash onto adjacent foes.",
+      frost: "The Rime Rune makes your frost slow foes for longer.",
+      bolt: "The Forked Rune makes your bolt arc to a second foe.",
+      phase: "The Phase Rune lets your spells cross walls.",
     };
     const spellRows = meta.spellOrder.map((id, index) => {
       const spell = SPELLS[id];
       const cost = Math.max(1, spell.cost - meta.manaDiscount);
-      return `<div class="spellbook-entry"><div class="spellbook-title"><strong>${index + 1}. ${spell.name}</strong><span class="spellbook-cost">${cost} MP</span></div><span>${meta.spellEffects[id] ? runeNames[id] : "No spell rune yet"}</span></div>`;
+      return `<div class="spellbook-entry"><div class="spellbook-title"><strong>${index + 1}. ${spell.name}</strong><span class="spellbook-cost">${cost} mana</span></div><span>${meta.spellEffects[id] ? runeNames[id] : "This spell has no rune yet."}</span></div>`;
     });
     const extraRunes = meta.spellEffects.phase
       ? [`<div class="spellbook-entry rune"><strong>Universal Rune</strong><span>${runeNames.phase}</span></div>`]
@@ -2191,12 +2165,7 @@
     };
     startFloor(floor, carry);
     const theme = themeForFloor(floor);
-    if ((floor - 1) % 5 === 0) {
-      showBanner(`Theme: ${theme.name}`, 1600);
-    } else {
-      showBanner(`Floor ${floor}`, 1000);
-    }
-    if (els.hint) els.hint.textContent = "Move · Smash crates · Beat the boss · Descend";
+    if ((floor - 1) % 5 === 0) showBanner(theme.name, 1600);
   }
 
   function startFloor(floor, carry) {
@@ -2281,7 +2250,7 @@
     hideAllMenus();
     els.startScreen.classList.add("hidden");
     startFloor(1, null);
-    showBanner(`${WEAPONS[weaponId].name} · ${SPELLS[spellId].name} ready`, 1200);
+    els.attackIcon.textContent = weaponId === "bow" ? "target" : "swords";
   }
 
   function restartRun() {
